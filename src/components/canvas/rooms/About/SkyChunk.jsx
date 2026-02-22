@@ -38,7 +38,7 @@ const SkyChunk = ({ chunkIndex = 0, seed = 0, scrollProgress = 0 }) => {
     const clouds = useMemo(() => {
         const items = [];
         const random = seededRandom(seed + chunkIndex * 1000);
-        const cloudCount = 6 + Math.floor(random() * 4);
+        const cloudCount = 15 + Math.floor(random() * 8); // Significantly more clouds
 
         for (let i = 0; i < cloudCount; i++) {
             const x = (random() - 0.5) * CHUNK_WIDTH;
@@ -114,20 +114,39 @@ const Cloud = ({
 
         const time = state.clock.elapsedTime;
 
-        // === DRIFT ANIMATION ===
-        const driftX = Math.sin(time * driftSpeed + timeOffset) * driftAmount;
-        const driftY = Math.sin(time * driftSpeed * 0.7 + timeOffset + 1.5) * bobAmount;
-
-        // Apply drift to position
-        meshRef.current.position.x = basePosition.current[0] + driftX;
-        meshRef.current.position.y = basePosition.current[1] + driftY;
-        meshRef.current.position.z = basePosition.current[2];
-
         // === TWARDA LINIA CLIP (RĘCZNE OBLICZENIE WORLD Z) ===
         // worldZ = pokój(-25) + scrollProgress + lokalna pozycja chmury
         // NIE używamy getWorldPosition() bo useFrame dzieci odpala się PRZED rodzicem!
         const cloudLocalZ = basePosition.current[2];
         const worldZ = ROOM_Z + scrollProgress + cloudLocalZ;
+
+        // === CLOUD EVASION EFFECT ===
+        // As clouds get closer to the camera, they move aside to keep the center clear
+        const evasionStart = -60;
+        const evasionEnd = -10;
+        let evasionFactor = 0;
+
+        if (worldZ > evasionStart && worldZ < evasionEnd) {
+            evasionFactor = (worldZ - evasionStart) / (evasionEnd - evasionStart);
+            // Smoothstep for natural ease in and out
+            evasionFactor = evasionFactor * evasionFactor * (3 - 2 * evasionFactor);
+        } else if (worldZ >= evasionEnd) {
+            evasionFactor = 1;
+        }
+
+        // Push left/right based on initial X position to open up the middle
+        const dirX = basePosition.current[0] >= 0 ? 1 : -1;
+        const maxEvasion = 15;
+        const evasionX = evasionFactor * maxEvasion * dirX;
+
+        // === DRIFT ANIMATION ===
+        const driftX = Math.sin(time * driftSpeed + timeOffset) * driftAmount;
+        const driftY = Math.sin(time * driftSpeed * 0.7 + timeOffset + 1.5) * bobAmount;
+
+        // Apply drift and evasion to position
+        meshRef.current.position.x = basePosition.current[0] + driftX + evasionX;
+        meshRef.current.position.y = basePosition.current[1] + driftY;
+        meshRef.current.position.z = basePosition.current[2];
 
         // Jeśli chmura jest za linią clipu → natychmiast niewidoczna
         if (materialRef.current) {

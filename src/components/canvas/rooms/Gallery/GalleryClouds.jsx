@@ -18,7 +18,7 @@ const CLOUD_TEXTURES = [
  * GalleryClouds Component
  * Static clouds scattered randomly above the gallery room
  */
-const GalleryClouds = ({ count = 12, seed = 42 }) => {
+const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 3, 0] }) => {
     // Movement boundaries - must match StaticCloud
     const startX = 40;
     const endX = -40;
@@ -65,6 +65,7 @@ const GalleryClouds = ({ count = 12, seed = 42 }) => {
                     textureIndex={cloud.textureIndex}
                     driftSpeed={cloud.driftSpeed}
                     initialOffset={cloud.initialOffset}
+                    rotationOffset={rotationOffset}
                 />
             ))}
         </group>
@@ -72,7 +73,7 @@ const GalleryClouds = ({ count = 12, seed = 42 }) => {
 };
 
 // Static cloud component (billboard with continuous drift)
-const StaticCloud = ({ position, scale, opacity, textureIndex, driftSpeed, initialOffset }) => {
+const StaticCloud = ({ position, scale, opacity, textureIndex, driftSpeed, initialOffset, rotationOffset }) => {
     const meshRef = useRef();
     const basePosition = useRef(position);
 
@@ -103,7 +104,7 @@ const StaticCloud = ({ position, scale, opacity, textureIndex, driftSpeed, initi
         meshRef.current.position.z = basePosition.current[2];
 
         // Billboard - always face camera with rotation offset
-        const offsetRotation = new THREE.Euler(0, -Math.PI / 3, 0);
+        const offsetRotation = new THREE.Euler(rotationOffset[0], rotationOffset[1], rotationOffset[2]);
         const offsetQuaternion = new THREE.Quaternion().setFromEuler(offsetRotation);
         meshRef.current.quaternion.copy(camera.quaternion).multiply(offsetQuaternion);
     });

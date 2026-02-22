@@ -160,18 +160,18 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
                 <div
                     style={{
                         position: 'absolute',
-                        padding: '2.5rem',
+                        padding: isMobile ? '1.5rem' : '2.5rem',
                         transition: transitionSpring, // The bouncy entrance
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '1.2rem',
-                        overflow: 'hidden',
                         fontFamily: "'Cabin Sketch', cursive", // Hand-drawn vibe
                         pointerEvents: 'auto', // Re-enable clicks for the card
                         ...cardStyle,
                         // Override styles for grid layout to be centered and wider
                         ...(content.layout === 'certificate_grid' ? {
-                            width: 'clamp(300px, 90vw, 1200px)',
+                            // Make it centered and wide on desktop
+                            width: isMobile ? '95vw' : 'clamp(300px, 90vw, 1200px)',
                             height: 'clamp(500px, 85vh, 900px)',
                             maxHeight: '85vh',
                             left: '50%',
@@ -265,24 +265,35 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
 
                     {/* === LAYOUT: CERTIFICATE GRID === */}
                     {content.layout === 'certificate_grid' ? (
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                            gap: '2rem',
-                            padding: '1rem 0',
-                            ...getStaggerStyle(200)
-                        }}>
+                        <div
+                            className="awards-scroll-container"
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+                                alignContent: 'start',
+                                flex: 1,
+                                overflowY: 'auto',
+                                overflowX: 'hidden',
+                                minHeight: 0,
+                                gap: isMobile ? '1rem' : '2rem',
+                                padding: isMobile ? '1rem 0.5rem 2rem 0.5rem' : '1rem 1rem 2rem 1rem', // extra bottom padding
+                                marginRight: isMobile ? '-0.5rem' : '-1.5rem', // push scrollbar to the edge
+                                paddingRight: isMobile ? '0.5rem' : '1.5rem', // compensate for margin
+                                ...getStaggerStyle(200)
+                            }}>
                             {content.items?.map((item, index) => (
                                 <div key={index} style={{
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: '0.8rem',
-                                    backgroundColor: '#fff',
+                                    backgroundColor: '#f9f9f9',
                                     padding: '1rem',
-                                    borderRadius: '2px',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                                    border: '2px solid #1a1a1a',
+                                    boxShadow: '4px 4px 0px rgba(0,0,0,0.1)',
                                     transition: 'transform 0.2s',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    // Slight sketch styling
+                                    borderRadius: '2px 255px 3px 255px / 255px 5px 225px 3px'
                                 }}
                                     onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                                     onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -294,7 +305,9 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
                                         width: '100%',
                                         paddingBottom: '70%', // ~ISO A4 Landscape ratio
                                         backgroundColor: '#eee',
-                                        overflow: 'hidden'
+                                        border: '2px solid #1a1a1a',
+                                        overflow: 'hidden',
+                                        borderRadius: '2px 255px 3px 255px / 255px 5px 225px 3px'
                                     }}>
                                         <img
                                             src={item.image}
@@ -312,10 +325,10 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
 
                                     {/* Caption */}
                                     <div style={{ textAlign: 'center' }}>
-                                        <h4 style={{ margin: '0 0 0.3rem 0', fontSize: '1rem', fontWeight: 700, fontFamily: "'Rubik Scribble', cursive" }}>
+                                        <h4 style={{ margin: '0 0 0.4rem 0', fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Rubik Scribble', cursive" }}>
                                             {item.label}
                                         </h4>
-                                        <span style={{ fontSize: '1rem', color: '#666', fontFamily: "'Cabin Sketch', cursive" }}>
+                                        <span style={{ fontSize: '1.1rem', color: '#4a4a4a', fontFamily: "'Cabin Sketch', cursive", fontWeight: 700 }}>
                                             {item.date}
                                         </span>
                                     </div>

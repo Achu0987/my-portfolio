@@ -214,7 +214,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                         >
                             <planeGeometry args={[1.9, 0.4]} />
                             <meshBasicMaterial
-                                color="#ffffffff"
+                                color="#ffffff"
                                 toneMapped={false}
                                 side={THREE.DoubleSide}
                             />
@@ -225,7 +225,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                             position={[0, -1.5, 0]}
                             distance={6}
                             intensity={0.8}
-                            color="#ffffffff"
+                            color="#ffffff"
                             decay={2}
                         />
                     </group>

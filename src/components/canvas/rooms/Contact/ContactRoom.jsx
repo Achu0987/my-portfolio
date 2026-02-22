@@ -6,6 +6,7 @@ import gsap from 'gsap';
 import MessagePaper from './MessagePaper';
 import SocialBarrel from './SocialBarrel';
 import { useScene } from '../../../../context/SceneContext';
+import GalleryClouds from '../Gallery/GalleryClouds';
 
 // ============================================
 // ============================================
@@ -64,7 +65,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
     // Configure texture repeating (1:1 scale)
     useEffect(() => {
         if (seaTexture) {
-            seaTexture.wrapS = seaTexture.wrapT = THREE.RepeatWrapping;
+            seaTexture.wrapS = seaTexture.wrapT = THREE.MirroredRepeatWrapping;
             seaTexture.repeat.set(6, 4);
             seaTexture.needsUpdate = true;
         }
@@ -79,7 +80,14 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
     }, [seaTexture, moloTexture]);
 
     useEffect(() => {
-        camera.rotation.order = 'YXZ';
+        // Change to YXZ smoothly on mount for proper head nodding, 
+        // avoiding mathematical snapping of the Euler angles.
+        camera.rotation.reorder('YXZ');
+
+        return () => {
+            // Restore default XYZ on unmount so other rooms/corridors don't break
+            camera.rotation.reorder('XYZ');
+        };
     }, [camera]);
 
     // Track if we've signaled ready
@@ -94,7 +102,12 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
     const hasAnimatedDown = useRef(false);
     // Latch exit state to prevent glitch
     const hasExitTriggered = useRef(false);
-    if (isExiting) hasExitTriggered.current = true;
+    if (isExiting && !hasExitTriggered.current) {
+        hasExitTriggered.current = true;
+        // Do NOT reorder to XYZ here. Let DoorSection's GSAP animate camera back to the door
+        // while remaining in YXZ order. This prevents "neck snapping" because interpolating 
+        // to X=0 in YXZ order naturally lifts the head up without twisting the neck.
+    }
 
     // Refs for animations
     const waveRefs = useRef([]);
@@ -198,19 +211,18 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
         }
 
         // 1. Camera Animation (Simple Lerp)
-        if (hasAnimatedDown.current) { // Only animate if we started the 'look down' sequence
-            const lerpSpeed = delta * CAMERA_SETTINGS.lerpSpeed;
+        if (hasAnimatedDown.current && !isExiting && !hasExitTriggered.current) {
+            // Only animate if we started the 'look down' sequence AND we are NOT exiting.
+            // When exiting, DoorSection.jsx takes full control of the camera with GSAP.
 
-            if (isExiting || hasExitTriggered.current) {
-                // EXIT MODE
-                camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, 0, lerpSpeed);
-                camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, 0, lerpSpeed);
-            } else {
-                // NORMAL MODE (Look Down)
-                camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, targetRotX.current, lerpSpeed);
-                camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, targetRotY.current, lerpSpeed);
-                camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, targetRotZ.current, lerpSpeed);
-            }
+            // Clamp delta to prevent massive jumps when React re-renders lag the frame rate
+            const safeDelta = Math.min(delta, 0.033);
+            const lerpSpeed = safeDelta * CAMERA_SETTINGS.lerpSpeed;
+
+            // NORMAL MODE (Look Down)
+            camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, targetRotX.current, lerpSpeed);
+            camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, targetRotY.current, lerpSpeed);
+            camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, targetRotZ.current, lerpSpeed);
         }
 
         // 2. Wave Animation
@@ -285,6 +297,9 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
 
     return (
         <group position={[0, -0.7, -5]}>
+            {/* ☁️ CLOUDS */}
+            <GalleryClouds count={15} seed={88} rotationOffset={[0, 1, 0]} />
+
             {/* 🌊 OCEAN WAVE LAYERS */}
             <group position={[0, -1, -8]}>
                 {Array.from({ length: WAVE_LAYERS }).map((_, i) => (

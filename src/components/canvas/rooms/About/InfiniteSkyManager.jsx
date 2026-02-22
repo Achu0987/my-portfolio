@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -270,9 +270,9 @@ const IntroMilestone = ({ z, scrollProgress }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/CabinSketch-Bold.ttf"
+                font="/fonts/RubikScribble-Regular.ttf"
             >
-                ✦ TOMASZ SZMAJDA ✦
+                TOMASZ SZMAJDA
             </Text>
 
             {/* Subtitle - Brand (spreads right) */}
@@ -410,27 +410,22 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
     const sotyRef = useRef();
     const sotdRef = useRef();
     const sotmRef = useRef();
-    const featuredRef = useRef();
-
     // Load textures
     const sotyTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTY.webp');
     const sotdTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTD.webp');
     const sotmTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTM.webp');
-    const featuredTexture = useLoader(THREE.TextureLoader, '/textures/about/FEATURED.webp');
     const buttonTexture = useLoader(THREE.TextureLoader, '/textures/about/button.webp');
 
     // Color space fix
     sotyTexture.colorSpace = THREE.SRGBColorSpace;
     sotdTexture.colorSpace = THREE.SRGBColorSpace;
     sotmTexture.colorSpace = THREE.SRGBColorSpace;
-    featuredTexture.colorSpace = THREE.SRGBColorSpace;
     buttonTexture.colorSpace = THREE.SRGBColorSpace;
 
     // Calculate aspect ratios
     const sotyAspect = sotyTexture.image ? sotyTexture.image.width / sotyTexture.image.height : 1.5;
     const sotdAspect = sotdTexture.image ? sotdTexture.image.width / sotdTexture.image.height : 1.5;
     const sotmAspect = sotmTexture.image ? sotmTexture.image.width / sotmTexture.image.height : 1.5;
-    const featuredAspect = featuredTexture.image ? featuredTexture.image.width / featuredTexture.image.height : 1.5;
     const buttonAspect = buttonTexture.image ? buttonTexture.image.width / buttonTexture.image.height : 3;
 
     // Base height for cards
@@ -489,9 +484,6 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
         if (sotmRef.current) {
             sotmRef.current.position.x = revealFactor * spreadX;
         }
-        if (featuredRef.current) {
-            featuredRef.current.position.y = 0.5 - revealFactor * 4;
-        }
 
         // Apply SOTY movement (Upwards)
         if (sotyRef.current) {
@@ -509,55 +501,10 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/CabinSketch-Bold.ttf"
+                font="/fonts/RubikScribble-Regular.ttf"
             >
-                ✦ AWARDS ✦
+                AWARDS
             </Text>
-
-            {/* === FEATURED (furthest back, rendered first) === */}
-            <group ref={featuredRef} position={[0, 0.5, -0.7]}>
-                <mesh>
-                    <planeGeometry args={[cardHeight * featuredAspect, cardHeight]} />
-                    <meshBasicMaterial
-                        map={featuredTexture}
-                        transparent
-                        side={THREE.DoubleSide}
-                    />
-                </mesh>
-                {/* BUTTON */}
-                <AwardButton
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        openOverlay(AWARDS_DATA.featured);
-                    }}
-                    texture={buttonTexture}
-                    width={buttonWidth}
-                    height={buttonHeight}
-                    position={[0, buttonY, 0.05]}
-                />
-                {/* AWARD LABEL */}
-                <Text
-                    position={[0, 0.95, 0.01]}
-                    fontSize={0.45}
-                    color="#1a1a1a"
-                    anchorX="center"
-                    anchorY="middle"
-                    font="/fonts/CabinSketch-Bold.ttf"
-                >
-                    FEATURED
-                </Text>
-                {/* AWARD COUNT */}
-                <Text
-                    position={[-0.05, 0, 0.01]}
-                    fontSize={0.8}
-                    color="#1a1a1a"
-                    anchorX="center"
-                    anchorY="middle"
-                    font="/fonts/CabinSketch-Bold.ttf"
-                >
-                    3
-                </Text>
-            </group>
 
             {/* === SOTD (behind SOTY, rendered second) === */}
             <group ref={sotdRef} position={[0, 0.5, -0.5]}>
@@ -754,10 +701,8 @@ const JourneyMilestone = ({ z, scrollProgress }) => {
         // UO Island (Left)
         if (uoRef.current) {
             // === EDYTUJ POZYCJE TUTAJ (UO) ===
-            // Startowe Y (schowane): -6
-            // Końcowe Y (widoczne): -1.5
-            const startY = 0;
-            const endY = 4;
+            const startY = -2;
+            const endY = 1.5;
 
             const currentBaseY = startY + revealFactor * (endY - startY);
             uoRef.current.position.y = currentBaseY + Math.sin(time * 0.5) * 0.2;
@@ -767,8 +712,8 @@ const JourneyMilestone = ({ z, scrollProgress }) => {
         // Freelance Island (Right)
         if (freelanceRef.current) {
             // === EDYTUJ POZYCJE TUTAJ (Freelance) ===
-            const startY = 1;
-            const endY = 3;
+            const startY = -1;
+            const endY = 2.5;
 
             const currentBaseY = startY + revealFactor * (endY - startY);
             freelanceRef.current.position.y = currentBaseY + Math.sin(time * 0.4 + 2) * 0.25;
@@ -785,9 +730,9 @@ const JourneyMilestone = ({ z, scrollProgress }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/CabinSketch-Bold.ttf"
+                font="/fonts/RubikScribble-Regular.ttf"
             >
-                ✦ JOURNEY ✦
+                JOURNEY
             </Text>
 
             {/* Subtitle */}
@@ -860,20 +805,20 @@ const JourneyMilestone = ({ z, scrollProgress }) => {
 // === EDYTUJ WYSOKOŚĆ TUTAJ (zmień wartość 'y' dla każdego balona) ===
 const BALLOON_CONFIG = [
     // Large balloons (main skills) - front and center
-    { texture: '/textures/about/reactduzybalon.webp', size: 'large', x: -2.5, y: 2, z: 0.3, phase: 0 },
-    { texture: '/textures/about/threejsduzybalon.webp', size: 'large', x: 2.5, y: 2.5, z: 0.2, phase: 1.5 },
-    { texture: '/textures/about/GSAPduzybalon.webp', size: 'large', x: 0, y: 3, z: 0.5, phase: 3 },
+    { texture: '/textures/about/reactduzybalon.webp', label: 'React', size: 'large', x: -2.5, y: 2, z: 0.3, phase: 0 },
+    { texture: '/textures/about/threejsduzybalon.webp', label: 'Three.js', size: 'large', x: 2.5, y: 2.5, z: 0.2, phase: 1.5 },
+    { texture: '/textures/about/GSAPduzybalon.webp', label: 'GSAP', size: 'large', x: 0, y: 3, z: 0.5, phase: 3 },
 
     // Medium balloons - scattered around
-    { texture: '/textures/about/JSSREDNIBALON.webp', size: 'medium', x: -4, y: 1, z: -0.3, phase: 0.8 },
-    { texture: '/textures/about/csssrednibalon.webp', size: 'medium', x: 4, y: 1.5, z: -0.2, phase: 2.2 },
-    { texture: '/textures/about/nextjssrednibalon.webp', size: 'medium', x: 0, y: 0.5, z: -0.4, phase: 4 },
+    { texture: '/textures/about/JSSREDNIBALON.webp', label: 'JavaScript', size: 'medium', x: -4, y: 1, z: -0.3, phase: 0.8 },
+    { texture: '/textures/about/csssrednibalon.webp', label: 'CSS', size: 'medium', x: 4, y: 1.5, z: -0.2, phase: 2.2 },
+    { texture: '/textures/about/nextjssrednibalon.webp', label: 'Next.js', size: 'medium', x: 0, y: 0.5, z: -0.4, phase: 4 },
 
     // Small balloons - background accents
-    { texture: '/textures/about/htmlmalybalon.webp', size: 'small', x: -5.5, y: 2.5, z: -0.8, phase: 1.2 },
-    { texture: '/textures/about/gitmalybalon.webp', size: 'small', x: 5.5, y: 3, z: -0.7, phase: 2.8 },
-    { texture: '/textures/about/figmamalybalon.webp', size: 'small', x: -3, y: 4.5, z: -0.5, phase: 3.5 },
-    { texture: '/textures/about/firebasemalybalon.webp', size: 'small', x: 3.5, y: 4, z: -0.6, phase: 4.5 },
+    { texture: '/textures/about/htmlmalybalon.webp', label: 'HTML', size: 'small', x: -5.5, y: 2.5, z: -0.8, phase: 1.2 },
+    { texture: '/textures/about/gitmalybalon.webp', label: 'Git', size: 'small', x: 5.5, y: 3, z: -0.7, phase: 2.8 },
+    { texture: '/textures/about/figmamalybalon.webp', label: 'Figma', size: 'small', x: -3, y: 4.5, z: -0.5, phase: 3.5 },
+    { texture: '/textures/about/firebasemalybalon.webp', label: 'Firebase', size: 'small', x: 3.5, y: 4, z: -0.6, phase: 4.5 },
 ];
 
 // Size multipliers for balloon categories
@@ -889,8 +834,23 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
     const texture = useLoader(THREE.TextureLoader, config.texture);
     texture.colorSpace = THREE.SRGBColorSpace;
 
+    const [isPopping, setIsPopping] = useState(false);
+    const [hovered, setHovered] = useState(false);
+    const [isFadingOutText, setIsFadingOutText] = useState(false);
+    const popRef = useRef(0);
+    const textFadeRef = useRef(1); // 1 = fully visible, 0 = hidden
+    const respawnOffsetRef = useRef(0); // For floating back up after respawn
+    const balloonMatRef = useRef();
+    const textRef = useRef();
+
     const aspect = texture.image ? texture.image.width / texture.image.height : 1;
     const baseHeight = SIZE_MULTIPLIERS[config.size];
+
+    const outerGroupRef = useRef();
+    const targetScale = useRef(1.0);
+    const currentScale = useRef(1.0);
+    const targetMagnet = useRef({ x: 0, y: 0 });
+    const currentMagnet = useRef({ x: 0, y: 0 });
 
     // === RESPONSYWNOŚĆ ===
     // Na mobile (wąski viewport) balony są bliżej środka
@@ -899,18 +859,95 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
     const spreadScale = isMobile ? 0.4 : 1;   // Jak bardzo zmniejszamy spread na mobile
     const sizeScale = isMobile ? 0.85 : 1;    // Trochę mniejsze balony na mobile
 
+    // Cursor handling
+    useEffect(() => {
+        if (hovered && !isPopping) {
+            document.body.style.cursor = 'pointer';
+        } else {
+            document.body.style.cursor = 'auto';
+        }
+    }, [hovered, isPopping]);
+
+    // Handle text fade out timer
+    useEffect(() => {
+        if (isPopping) {
+            // Start fading out text after 3 seconds
+            const timer = setTimeout(() => {
+                setIsFadingOutText(true);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isPopping]);
+
+    // Animation update loop
+    useFrame((state, delta) => {
+        if (hovered && !isPopping) {
+            targetScale.current = 1.05; // lekkie powiększenie
+        } else {
+            targetScale.current = 1.0;
+            targetMagnet.current.x = 0;
+            targetMagnet.current.y = 0;
+        }
+
+        currentScale.current = THREE.MathUtils.lerp(currentScale.current, targetScale.current, 8 * delta);
+        currentMagnet.current.x = THREE.MathUtils.lerp(currentMagnet.current.x, targetMagnet.current.x, 8 * delta);
+        currentMagnet.current.y = THREE.MathUtils.lerp(currentMagnet.current.y, targetMagnet.current.y, 8 * delta);
+
+        if (isPopping) {
+            // Smooth, slow pop animation
+            popRef.current = THREE.MathUtils.lerp(popRef.current, 1, 2.5 * delta);
+        }
+
+        if (isFadingOutText) {
+            // Fade out the text slowly
+            textFadeRef.current = THREE.MathUtils.lerp(textFadeRef.current, 0, 2 * delta);
+
+            // Once fully faded, respawn the balloon from below
+            if (textFadeRef.current < 0.05) {
+                setIsPopping(false);
+                setHovered(false);
+                setIsFadingOutText(false);
+                popRef.current = 0;
+                textFadeRef.current = 1;
+                respawnOffsetRef.current = -12; // Teleport below to float up again
+                // Immediately reset opacities to prevent flashing
+                if (balloonMatRef.current) balloonMatRef.current.opacity = 1;
+                if (textRef.current) textRef.current.fillOpacity = 0;
+            }
+        }
+
+        // Float back up if respawning
+        if (respawnOffsetRef.current < -0.01) {
+            respawnOffsetRef.current = THREE.MathUtils.lerp(respawnOffsetRef.current, 0, 1.5 * delta);
+        }
+
+        // Apply opacities if not fully respawned
+        if (balloonMatRef.current && isPopping) {
+            balloonMatRef.current.opacity = 1 - popRef.current;
+        }
+        if (textRef.current && isPopping) {
+            // Combine pop-in and fade-out opacities
+            textRef.current.fillOpacity = popRef.current * textFadeRef.current;
+            textRef.current.outlineOpacity = popRef.current * textFadeRef.current;
+        }
+    });
+
     // Floating animation with unique phase
     const floatY = Math.sin(time * 0.6 + config.phase) * 0.3;
     const floatX = Math.sin(time * 0.4 + config.phase * 0.7) * 0.15;
     const rotation = Math.sin(time * 0.3 + config.phase) * 0.08;
 
-    // Reveal: balloons float up from below
+    // Reveal: balloons float up from below, including respawn offset
     const startY = config.y - 8;
     const endY = config.y;
-    const currentY = startY + revealFactor * (endY - startY) + floatY;
+    const currentY = startY + revealFactor * (endY - startY) + floatY + respawnOffsetRef.current;
 
     // Scale up as they reveal
-    const scale = revealFactor * sizeScale;
+    let scale = revealFactor * sizeScale;
+
+    // Apply expanding pop effect and smooth hover scale
+    const popScaleEffect = currentScale.current + popRef.current * 0.4;
+    scale *= popScaleEffect;
 
     // === SPREAD EFFECT (ROZSUWANIE) ===
     // Wszystkie balony rozsuwają się na boki
@@ -935,19 +972,67 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
     const baseX = config.x * positionScale;
 
     return (
-        <mesh
+        <group
+            ref={outerGroupRef}
             position={[baseX + floatX + spreadX, currentY, config.z]}
             rotation={[0, 0, rotation]}
             scale={scale}
         >
-            <planeGeometry args={[baseHeight * aspect, baseHeight]} />
-            <meshBasicMaterial
-                map={texture}
-                transparent
-                side={THREE.DoubleSide}
-                depthWrite={false}
-            />
-        </mesh>
+            <group position={[currentMagnet.current.x, currentMagnet.current.y, 0]}>
+                <mesh
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isPopping) setIsPopping(true);
+                    }}
+                    onPointerOver={(e) => {
+                        e.stopPropagation();
+                        if (!isPopping) setHovered(true);
+                    }}
+                    onPointerOut={(e) => {
+                        e.stopPropagation();
+                        setHovered(false);
+                    }}
+                    onPointerMove={(e) => {
+                        if (hovered && !isPopping && outerGroupRef.current) {
+                            const vec = new THREE.Vector3();
+                            outerGroupRef.current.getWorldPosition(vec);
+                            // Reduced magnetic pull from 0.5 to 0.15 for gentler effect
+                            targetMagnet.current.x = (e.point.x - vec.x) * 0.15;
+                            targetMagnet.current.y = (e.point.y - vec.y) * 0.15;
+                        }
+                    }}
+                    visible={popRef.current < 0.99} // Hide mesh completely when fully popped to optimize rendering
+                >
+                    <planeGeometry args={[baseHeight * aspect, baseHeight]} />
+                    <meshBasicMaterial
+                        ref={balloonMatRef}
+                        map={texture}
+                        transparent
+                        side={THREE.DoubleSide}
+                        depthWrite={false}
+                    />
+                </mesh>
+
+                {/* Stack Name Text that fades in then out */}
+                {isPopping && textFadeRef.current > 0.01 && (
+                    <Text
+                        ref={textRef}
+                        position={[0, 0, 0.1]}
+                        fontSize={baseHeight * 0.4}
+                        color="#1a1a1a"
+                        anchorX="center"
+                        anchorY="middle"
+                        font="/fonts/RubikScribble-Regular.ttf"
+                        fillOpacity={0}
+                        outlineWidth={0.02}
+                        outlineColor="#fff"
+                        outlineOpacity={0}
+                    >
+                        {config.label}
+                    </Text>
+                )}
+            </group>
+        </group>
     );
 };
 
@@ -1014,9 +1099,9 @@ const SkillsMilestone = ({ z, scrollProgress }) => {
                 color="#1a1a1a"
                 anchorX="center"
                 anchorY="middle"
-                font="/fonts/CabinSketch-Bold.ttf"
+                font="/fonts/RubikScribble-Regular.ttf"
             >
-                ✦ SKILLS ✦
+                SKILLS
             </Text>
 
             {/* Subtitle */}

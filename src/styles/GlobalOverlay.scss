@@ -174,3 +174,27 @@
         box-shadow: 2px 2px 0 rgba(26, 26, 26, 0.2);
     }
 }
+
+// Custom scrollbar for awards grid
+.awards-scroll-container {
+    &::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 4px;
+        margin-block: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #1a1a1a;
+        // Make it look sketchy/comic with thick borders
+        border-radius: 8px;
+        border: 3px solid #fff; // Transparent gap illusion against white/light background
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: #4a4a4a;
+    }
+}

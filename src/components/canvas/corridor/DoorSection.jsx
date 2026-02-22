@@ -52,7 +52,8 @@ const DoorSection = ({
     onEnter,
     autoCloseDelay = 3000,
     enterDistance = 8, // Default fly-through distance
-    setCameraOverride // Function to take control of camera from hook
+    setCameraOverride, // Function to take control of camera from hook
+    segmentIndex
 }) => {
     const groupRef = useRef(); // Main group that tilts
     const doorRef = useRef();
@@ -101,13 +102,12 @@ const DoorSection = ({
     useEffect(() => {
         // Only trigger for segment 0 doors (closest to start) and matching ID
         // We assume teleport always goes to segment 0
-        // We can check Z position to confirm segment 0 (approx > -80)
-        const isSegment0 = position[2] > -80;
+        const isSegment0 = segmentIndex === 0;
 
         if (pendingDoorClick && pendingDoorClick === doorId && isSegment0 && !isOpen && !isAnimating) {
             handleClick({ stopPropagation: () => { }, isTeleport: true }); // Trigger click simulation with TELEPORT flag
         }
-    }, [pendingDoorClick, doorId, position, isOpen, isAnimating]);
+    }, [pendingDoorClick, doorId, segmentIndex, isOpen, isAnimating]);
 
     // --- SILENT RESET FOR TELEPORTATION ---
     // If a teleport starts (users clicks map), and we are inside THIS room,

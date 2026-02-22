@@ -168,6 +168,7 @@ const CorridorSegment = ({
                     enterDistance={door.enterDistance}
                     onEnter={() => onDoorEnter?.(door.roomId)}
                     setCameraOverride={setCameraOverride}
+                    segmentIndex={segmentIndex}
                 />
             ))}
 
