@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Text, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
+import '../shaders/RevealMaterial'; // Registers alpha-discard reveal shader
 
 // Use same font as App.jsx preload (Inter) - works reliably
 const FONT_URL = 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff';
@@ -25,6 +26,12 @@ const EntranceDoors = ({
     const rightDoorRef = useRef();
     const leftHandleRef = useRef();
     const rightHandleRef = useRef();
+    const rightDoorMaterialRef = useRef(); // GSAP shader control
+    const leftDoorMaterialRef = useRef(); // Left door reveal control
+    const leftHandleMaterialRef = useRef(); // Left handle reveal control
+    const rightHandleMaterialRef = useRef(); // Right handle reveal control
+    const leftHandlePaintedRef = useRef(); // Painted handle mesh visibility
+    const rightHandlePaintedRef = useRef(); // Painted handle mesh visibility
     const groupRef = useRef();
     const [isOpen, setIsOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
@@ -35,8 +42,12 @@ const EntranceDoors = ({
     const frameTexture = useTexture('/textures/doors/frame_sketch.webp');
     const doorLeftTexture = useTexture('/textures/doors/door_left_sketch.webp');
     const doorRightTexture = useTexture('/textures/doors/door_right_sketch.webp');
+    const doorRightPaintedTexture = useTexture('/textures/doors/door_right_painted.webp');
+    const doorLeftPaintedTexture = useTexture('/textures/doors/door_left_painted.webp');
     const handleLeftTexture = useTexture('/textures/doors/handle_left_sketch.webp');
+    const handleLeftPaintedTexture = useTexture('/textures/doors/handle_left_painted.webp');
     const handleRightTexture = useTexture('/textures/doors/handle_right_sketch.webp');
+    const handleRightPaintedTexture = useTexture('/textures/doors/handle_right_painted.webp');
     const doorBackTexture = useTexture('/textures/doors/door_back_left_sketch.webp');
     const edgeTexture = useTexture('/textures/doors/pien.webp');
     const bricksTexture = useTexture('/textures/entrance/wall_bricks_2.webp');
@@ -64,6 +75,7 @@ const EntranceDoors = ({
     const [textVisible, setTextVisible] = useState(false);
     const [clipProgress, setClipProgress] = useState(0); // 0-1 for pencil drawing reveal
     const inkSplashRef = useRef();
+    const handleHideDelayRef = useRef(); // Track pending gsap.delayedCall for handle visibility
     const bugFixedTextRef = useRef();
     const bugClickPos = useRef({ x: 0, y: 0 }); // Store click position
 
@@ -279,12 +291,14 @@ const EntranceDoors = ({
         gsap.to(leftDoorRef.current.rotation, {
             y: -0.08,
             duration: 0.3,
-            ease: 'power2.out'
+            ease: 'power2.out',
+            overwrite: true
         });
         gsap.to(rightDoorRef.current.rotation, {
             y: 0.08,
             duration: 0.3,
-            ease: 'power2.out'
+            ease: 'power2.out',
+            overwrite: true
         });
 
         // Rotate handles down slightly (hint effect)
@@ -292,16 +306,56 @@ const EntranceDoors = ({
             gsap.to(leftHandleRef.current.rotation, {
                 z: 0.1,
                 duration: 0.2,
-                ease: 'power2.out'
+                ease: 'power2.out',
+                overwrite: true
             });
         }
         if (rightHandleRef.current) {
             gsap.to(rightHandleRef.current.rotation, {
                 z: -0.1,
                 duration: 0.2,
-                ease: 'power2.out'
+                ease: 'power2.out',
+                overwrite: true
             });
         }
+
+        // Brush-stroke reveal: discard sketch pixels to show painted door beneath
+        if (rightDoorMaterialRef.current) {
+            gsap.to(rightDoorMaterialRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (leftDoorMaterialRef.current) {
+            gsap.to(leftDoorMaterialRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (leftHandleMaterialRef.current) {
+            gsap.to(leftHandleMaterialRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (rightHandleMaterialRef.current) {
+            gsap.to(rightHandleMaterialRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        // Show painted handles (kill any pending hide from previous leave)
+        if (handleHideDelayRef.current) handleHideDelayRef.current.kill();
+        if (leftHandlePaintedRef.current) leftHandlePaintedRef.current.visible = true;
+        if (rightHandlePaintedRef.current) rightHandlePaintedRef.current.visible = true;
     };
 
     const handlePointerLeave = () => {
@@ -313,12 +367,14 @@ const EntranceDoors = ({
         gsap.to(leftDoorRef.current.rotation, {
             y: 0,
             duration: 0.3,
-            ease: 'power2.out'
+            ease: 'power2.out',
+            overwrite: true
         });
         gsap.to(rightDoorRef.current.rotation, {
             y: 0,
             duration: 0.3,
-            ease: 'power2.out'
+            ease: 'power2.out',
+            overwrite: true
         });
 
         // Reset handles
@@ -326,16 +382,58 @@ const EntranceDoors = ({
             gsap.to(leftHandleRef.current.rotation, {
                 z: 0,
                 duration: 0.2,
-                ease: 'power2.out'
+                ease: 'power2.out',
+                overwrite: true
             });
         }
         if (rightHandleRef.current) {
             gsap.to(rightHandleRef.current.rotation, {
                 z: 0,
                 duration: 0.2,
-                ease: 'power2.out'
+                ease: 'power2.out',
+                overwrite: true
             });
         }
+
+        // Reverse brush-stroke reveal
+        if (rightDoorMaterialRef.current) {
+            gsap.to(rightDoorMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (leftDoorMaterialRef.current) {
+            gsap.to(leftDoorMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (leftHandleMaterialRef.current) {
+            gsap.to(leftHandleMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (rightHandleMaterialRef.current) {
+            gsap.to(rightHandleMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+
+        // Hide painted handles after reverse animation completes
+        handleHideDelayRef.current = gsap.delayedCall(0.55, () => {
+            if (leftHandlePaintedRef.current) leftHandlePaintedRef.current.visible = false;
+            if (rightHandlePaintedRef.current) rightHandlePaintedRef.current.visible = false;
+        });
     };
 
 
@@ -402,14 +500,16 @@ const EntranceDoors = ({
 
         if (windowAvatarRef.current) {
             gsap.to(windowAvatarRef.current.position, {
-                x: 2.5, // Slide into window position
+                x: 2.5,
                 duration: 0.5,
-                ease: 'back.out(1.7)'
+                ease: 'back.out(1.7)',
+                overwrite: true
             });
             gsap.to(windowAvatarRef.current.rotation, {
-                z: 0.1, // Slight tilt
+                z: 0.1,
                 duration: 0.5,
-                ease: 'power2.out'
+                ease: 'power2.out',
+                overwrite: true
             });
         }
     };
@@ -421,14 +521,16 @@ const EntranceDoors = ({
 
         if (windowAvatarRef.current) {
             gsap.to(windowAvatarRef.current.position, {
-                x: 3.5, // Slide back behind bricks
+                x: 3.5,
                 duration: 0.4,
-                ease: 'power2.in'
+                ease: 'power2.in',
+                overwrite: true
             });
             gsap.to(windowAvatarRef.current.rotation, {
                 z: 0,
                 duration: 0.4,
-                ease: 'power2.in'
+                ease: 'power2.in',
+                overwrite: true
             });
         }
     };
@@ -521,14 +623,28 @@ const EntranceDoors = ({
                     <meshStandardMaterial map={edgeTexture} roughness={0.9} />
                 </mesh>
 
-                {/* Front Texture Face */}
-                <mesh position={[doorWidth / 2, 0, 0.09]}>
+                {/* Painted layer (behind sketch) - left door */}
+                <mesh position={[doorWidth / 2, 0, 0.088]}>
                     <planeGeometry args={[doorWidth, doorHeight]} />
                     <meshStandardMaterial
+                        map={doorLeftPaintedTexture}
+                        transparent={true}
+                        alphaTest={0.5}
+                        roughness={0.8}
+                    />
+                </mesh>
+
+                {/* Sketch overlay (front) - left door brush-stroke reveal */}
+                <mesh position={[doorWidth / 2, 0, 0.09]}>
+                    <planeGeometry args={[doorWidth, doorHeight]} />
+                    <revealMaterial
+                        ref={leftDoorMaterialRef}
                         map={doorLeftTexture}
                         transparent={true}
                         alphaTest={0.5}
                         roughness={0.8}
+                        depthWrite={false}
+                        uProgress={0.0}
                     />
                 </mesh>
 
@@ -546,13 +662,26 @@ const EntranceDoors = ({
 
                 {/* Handle Layer (animated) - pivot at screw center (292,459 on 332x848 texture) */}
                 <group ref={leftHandleRef} position={[doorWidth / 2 + 0.357, -0.099, 0.10]}>
-                    <mesh position={[-0.357, 0.099, 0]}>
+                    {/* Painted handle (behind) - hidden until hover */}
+                    <mesh ref={leftHandlePaintedRef} position={[-0.357, 0.09, -0.001]} visible={false}>
                         <planeGeometry args={[doorWidth, doorHeight]} />
                         <meshStandardMaterial
+                            map={handleLeftPaintedTexture}
+                            transparent={true}
+                            alphaTest={0.5}
+                            depthWrite={false}
+                        />
+                    </mesh>
+                    {/* Sketch handle overlay (front) */}
+                    <mesh position={[-0.357, 0.099, 0]}>
+                        <planeGeometry args={[doorWidth, doorHeight]} />
+                        <revealMaterial
+                            ref={leftHandleMaterialRef}
                             map={handleLeftTexture}
                             transparent={true}
                             alphaTest={0.5}
                             depthWrite={false}
+                            uProgress={0.0}
                         />
                     </mesh>
                 </group>
@@ -571,14 +700,28 @@ const EntranceDoors = ({
                     <meshStandardMaterial map={edgeTexture} roughness={0.9} />
                 </mesh>
 
-                {/* Front Texture Face */}
-                <mesh position={[-doorWidth / 2, 0, 0.09]}>
+                {/* Painted layer (behind sketch) - revealed when sketch fades out on hover */}
+                <mesh position={[-doorWidth / 2, 0, 0.088]}>
                     <planeGeometry args={[doorWidth, doorHeight]} />
                     <meshStandardMaterial
+                        map={doorRightPaintedTexture}
+                        transparent={true}
+                        alphaTest={0.5}
+                        roughness={0.8}
+                    />
+                </mesh>
+
+                {/* Sketch overlay (front) - brush-stroke discard reveals painted beneath */}
+                <mesh position={[-doorWidth / 2, 0, 0.09]}>
+                    <planeGeometry args={[doorWidth, doorHeight]} />
+                    <revealMaterial
+                        ref={rightDoorMaterialRef}
                         map={doorRightTexture}
                         transparent={true}
                         alphaTest={0.5}
                         roughness={0.8}
+                        depthWrite={false}
+                        uProgress={0.0}
                     />
                 </mesh>
 
@@ -595,13 +738,26 @@ const EntranceDoors = ({
 
                 {/* Handle Layer (animated) - pivot at screw center (40,459 on 332x848 texture) */}
                 <group ref={rightHandleRef} position={[-doorWidth / 2 - 0.357, -0.099, 0.10]}>
-                    <mesh position={[0.357, 0.099, 0]}>
+                    {/* Painted handle (behind) - hidden until hover */}
+                    <mesh ref={rightHandlePaintedRef} position={[0.357, 0.09, -0.001]} visible={false}>
                         <planeGeometry args={[doorWidth, doorHeight]} />
                         <meshStandardMaterial
+                            map={handleRightPaintedTexture}
+                            transparent={true}
+                            alphaTest={0.5}
+                            depthWrite={false}
+                        />
+                    </mesh>
+                    {/* Sketch handle overlay (front) */}
+                    <mesh position={[0.357, 0.099, 0]}>
+                        <planeGeometry args={[doorWidth, doorHeight]} />
+                        <revealMaterial
+                            ref={rightHandleMaterialRef}
                             map={handleRightTexture}
                             transparent={true}
                             alphaTest={0.5}
                             depthWrite={false}
+                            uProgress={0.0}
                         />
                     </mesh>
                 </group>

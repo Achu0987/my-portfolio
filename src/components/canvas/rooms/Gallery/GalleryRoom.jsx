@@ -47,6 +47,10 @@ const PROJECT_COUNT = 10; // Keep the count for the infinite scroll feel
 const GAP = 2.5;
 
 // === CONFIGURATION ===
+// Zmień te wartości aby dopasować proporcje ptaka (grafika nie jest kwadratowa)
+const BIRD_WIDTH = 0.5;
+const BIRD_HEIGHT = 0.35; // Mniejsze = bardziej "spłaszczony" / rozciągnięty wzdłuż
+
 // Adjust this value (0.0 to 1.0) to crop the right side of the "Houses" graphic.
 // 0.0 = No crop
 // 0.2 = 20% crop from the right (corridor side)
@@ -234,7 +238,7 @@ const GalleryRoom = ({ showRoom, onReady }) => {
     const railingTexture = useTexture('/textures/gallery/railing.webp');
     const housesTexture = useTexture('/textures/gallery/domki.webp');
     const cityTexture = useTexture('/textures/gallery/miastotlo.webp');
-    const birdTexture = useTexture('/textures/gallery/bird.webp');
+    const birdTexture = useTexture('/textures/gallery/bird_gray.webp');
     const clothespinTexture = useTexture('/textures/gallery/klamerka.webp');
 
     useEffect(() => {
@@ -435,7 +439,7 @@ const GalleryRoom = ({ showRoom, onReady }) => {
                 <FlyingBird texture={birdTexture} />
 
                 {/* Clouds scattered above */}
-                <GalleryClouds count={25} seed={123} />
+                <GalleryClouds count={65} seed={123} />
 
                 {/* Skybox/Environment */}
                 <mesh position={[0, 5, -20]}>
@@ -450,28 +454,69 @@ const GalleryRoom = ({ showRoom, onReady }) => {
 // Flying bird animation component
 const FlyingBird = ({ texture }) => {
     const birdRef = useRef();
-    const startX = -20;
-    const endX = 20;
-    const speed = 0.8; // Units per second
+    const startX = -25;
+    const endX = 25;
+    const speed = 2.5; // Zmniejszona prędkość lotu
 
-    useFrame((state) => {
+    // Zmienne do fizyki skoków
+    const velocityY = useRef(0);
+    const gravity = -12.0; // Zmniejszona grawitacja dla większej płynności
+    const jumpStrength = 5.5; // Delikatniejszy skok
+    const jumpInterval = useRef(0);
+
+    useFrame((state, delta) => {
         if (!birdRef.current) return;
 
-        const time = state.clock.getElapsedTime();
+        // Zabezpieczenie przed zbyt dużym powiększeniem delty (przy lagach)
+        const safeDelta = Math.min(delta, 0.05);
 
-        // Move from left to right, loop back
-        const progress = ((time * speed) % (endX - startX + 10)) + startX;
-        birdRef.current.position.x = progress;
+        // Ruch w poziomie
+        birdRef.current.position.x += speed * safeDelta;
 
-        // Gentle bobbing motion
-        birdRef.current.position.y = 4.5 + Math.sin(time * 2) * 0.3;
+        if (birdRef.current.position.x > endX) {
+            birdRef.current.position.x = startX;
+            birdRef.current.position.y = 4.5;
+            velocityY.current = 0;
+            jumpInterval.current = 0;
+            birdRef.current.rotation.z = 0;
+        }
 
-        // Slight banking when flying
-        birdRef.current.rotation.z = Math.sin(time * 1.5) * 0.1;
+        // Fizyka spadania
+        velocityY.current += gravity * safeDelta;
+        birdRef.current.position.y += velocityY.current * safeDelta;
+
+        // Skakanie (płynniejsze i przewidywalne)
+        jumpInterval.current -= safeDelta;
+
+        // Skok następuje po upływie czasu przewidzianego do następnego kliknięcia
+        if (jumpInterval.current <= 0 || birdRef.current.position.y < 3.2) {
+            velocityY.current = jumpStrength;
+            // Rzadsze, bardziej rytmiczne skoki (np. co pełną sekundę)
+            jumpInterval.current = 0.9 + Math.random() * 0.3;
+        }
+
+        // Ograniczenie dolne podłogi
+        if (birdRef.current.position.y < 3.0) {
+            birdRef.current.position.y = 3.0;
+            velocityY.current = jumpStrength;
+        }
+
+        // Ograniczenie górne sufitu
+        if (birdRef.current.position.y > 6.5) {
+            birdRef.current.position.y = 6.5;
+            velocityY.current = 0;
+        }
+
+        // Rotacja ptaka
+        // W Flappy Bird ptak delikatnie opada dziobem w dół gdy spada, i kieruje wzrok do góry gdy skacze
+        const targetRotationZ = THREE.MathUtils.clamp(velocityY.current * 0.05, -Math.PI / 6, Math.PI / 8);
+
+        // Bardzo płynne obracanie (lerp)
+        birdRef.current.rotation.z = THREE.MathUtils.lerp(birdRef.current.rotation.z, targetRotationZ, safeDelta * 8);
     });
 
     return (
-        <mesh ref={birdRef} position={[-20, 4.5, -10]} scale={[0.8, 0.8, 0.8]}>
+        <mesh ref={birdRef} position={[startX, 4.5, -10]} scale={[BIRD_WIDTH, BIRD_HEIGHT, 1]}>
             <planeGeometry args={[1.5, 1.5]} />
             <meshBasicMaterial
                 map={texture}

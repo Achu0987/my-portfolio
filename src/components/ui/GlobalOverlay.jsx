@@ -40,9 +40,25 @@ const GlobalOverlay = () => {
         }
     }, [overlayContent]);
 
-    if (!isVisible && !overlayContent && !cachedContent) return null;
+    // Wyłączamy "return null", żeby ciężkie filtry rozmycia i SVG były osadzone w DOM 
+    // i nie powodowały zacięć podczas pierwszego wywołania.
+    // if (!isVisible && !overlayContent && !cachedContent) return null;
 
-    const content = overlayContent || cachedContent;
+    // DUMMY RENDER MOCK - Pre-render the heaviest layout (certificate_grid) invisibly 
+    // to calculate CSS layout costs on page load, NOT on first click.
+    const dummyGridContent = {
+        title: 'Loading...',
+        layout: 'certificate_grid',
+        items: [
+            { label: '', date: '', image: '' },
+            { label: '', date: '', image: '' },
+            { label: '', date: '', image: '' },
+            { label: '', date: '', image: '' }
+        ],
+        platformConfig: { label: '...' }
+    };
+
+    const content = overlayContent || cachedContent || dummyGridContent;
 
     // Propagate animateOpen state to control CSS transitions
     return <ContentCard content={content} isOpen={animateOpen} onClose={closeOverlay} isMobile={isMobile} />;
@@ -136,10 +152,13 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    // Visuals
-                    backgroundColor: isOpen ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0)',
-                    backdropFilter: isOpen ? 'blur(8px)' : 'blur(0px)',
-                    transition: 'background-color 0.8s ease, backdrop-filter 0.8s ease',
+                    // Optymalizacja WebGL: Filtry są baaaardzo drogie podczas animacji
+                    // Trzymamy je na sztywno, a animujemy tylko przezroczystość (opacity)
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    opacity: isOpen ? 1 : 0,
+                    transition: 'opacity 0.8s ease',
                     // Mask applies ONLY here
                     ...maskStyle
                 }}
@@ -310,8 +329,10 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
                                         borderRadius: '2px 255px 3px 255px / 255px 5px 225px 3px'
                                     }}>
                                         <img
-                                            src={item.image}
+                                            src={item.image || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='} // fallback for dummy
                                             alt={item.label}
+                                            loading="lazy"
+                                            decoding="async"
                                             style={{
                                                 position: 'absolute',
                                                 top: 0,

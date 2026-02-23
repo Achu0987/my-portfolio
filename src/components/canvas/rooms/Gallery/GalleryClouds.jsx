@@ -35,7 +35,7 @@ const GalleryClouds = ({ count = 12, seed = 42, rotationOffset = [0, -Math.PI / 
 
             // Równomierny offset dla każdej chmury - rozłożone po całej szerokości
             // Każda chmura startuje w innym miejscu na osi X
-            const initialOffset = (i / count) * totalDistance + random() * 10;
+            const initialOffset = (i / count) * totalDistance + random() * 3;
 
             // Oblicz początkową pozycję X jakby chmura już była w ruchu
             const initialX = startX - (initialOffset % (totalDistance + 10)) + 5;

@@ -18,6 +18,36 @@ import { useTexture } from '@react-three/drei';
 const WAVE_LAYERS = 4;
 
 // ============================================
+// ⚙️ LATARNIA SETTINGS - TWEAK HERE
+// Edytuj te wartości, aby zmienić pozycję, obrót i wielkość latarni
+// ============================================
+export const LATARNIA_SETTINGS = {
+    // Pozycja: [lewo/prawo (X), góra/dół (Y), tył/przód (Z)]
+    position: [-10, 5, -20],
+
+    // Rotacja: [przechył w przód/tył (X), obrót w lewo/prawo (Y), obrót na boki (Z)]
+    rotation: [0, 0.1, 0],
+
+    // Wielkość: [szerokość, wysokość]
+    scale: [4, 5]
+};
+
+// ============================================
+// ⚙️ STATEK SETTINGS - TWEAK HERE
+// Edytuj te wartości, aby zmienić pozycję, obrót i wielkość statku
+// ============================================
+export const STATEK_SETTINGS = {
+    // Pozycja: [lewo/prawo (X), góra/dół (Y), tył/przód (Z)]
+    position: [0, 1.6, -15],
+
+    // Rotacja: [przechył w przód/tył (X), obrót w lewo/prawo (Y), obrót na boki (Z)]
+    rotation: [0, -0.2, 0],
+
+    // Wielkość: [szerokość, wysokość]
+    scale: [3, 1.3]
+};
+
+// ============================================
 // ⚙️ CAMERA SETTINGS - TWEAK HERE
 // ============================================
 const CAMERA_SETTINGS = {
@@ -56,6 +86,10 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
     const seaTexture = useTexture("/textures/contact/faletopdown.webp");
     // Load Molo Texture
     const moloTexture = useTexture("/textures/contact/molo.webp");
+    // Load Latarnia Texture
+    const latarniaTexture = useTexture("/textures/contact/latarnia.png");
+    // Load Statek Texture
+    const statekTexture = useTexture("/textures/contact/statek.webp");
 
     // Load Bottle Textures
     const bottleBody = useTexture("/textures/contact/czescglownabutelki.webp");
@@ -113,6 +147,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
     const waveRefs = useRef([]);
     const bottleRef = useRef();
     const bottleCapRef = useRef(); // Separate ref for cap animation
+    const statekRef = useRef(); // Ref for ship animation
 
     // Bottle cap animation state
     const [isCapAnimating, setIsCapAnimating] = useState(false);
@@ -236,6 +271,23 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
             }
         });
 
+        // 2.5 Ship Animation (bobbing with waves and sailing)
+        if (statekRef.current) {
+            // 🌊 Bobbing up and down (Y axis)
+            const bobSpeed = 0.8;
+            const bobAmplitude = 0.3;
+            statekRef.current.position.y = STATEK_SETTINGS.position[1] + Math.sin(time * bobSpeed) * bobAmplitude;
+
+            // ⛵ Sailing left and right (X axis)
+            const sailSpeed = 0.04; // znacznie wolniejsze pływanie (było 0.15)
+            const sailAmplitude = 12; // mniejszy obszar pływania, by nie wyjeżdżał za ekran (było 25)
+            statekRef.current.position.x = STATEK_SETTINGS.position[0] + Math.sin(time * sailSpeed) * sailAmplitude;
+
+            // 🔄 Add a slight tilt on the Z axis (roll)
+            const rollAmplitude = 0.05;
+            statekRef.current.rotation.z = Math.sin(time * bobSpeed * 1.2) * rollAmplitude;
+        }
+
         // 3. Bottle Cap Animation (lift up)
         if (isCapAnimating && bottleCapRef.current) {
             if (capProgress.current < 1) {
@@ -298,7 +350,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
     return (
         <group position={[0, -0.7, -5]}>
             {/* ☁️ CLOUDS */}
-            <GalleryClouds count={15} seed={88} rotationOffset={[0, 1, 0]} />
+            <GalleryClouds count={45} seed={88} rotationOffset={[0, 1, 0]} />
 
             {/* 🌊 OCEAN WAVE LAYERS */}
             <group position={[0, -1, -8]}>
@@ -372,6 +424,35 @@ const ContactRoom = ({ showRoom, onReady, isExiting }) => {
                     roughness={0.8}
                     side={THREE.DoubleSide}
                     transparent
+                />
+            </mesh>
+
+            {/* 🗼 LATARNIA (LIGHTHOUSE) */}
+            <mesh
+                position={LATARNIA_SETTINGS.position}
+                rotation={LATARNIA_SETTINGS.rotation}
+            >
+                <planeGeometry args={LATARNIA_SETTINGS.scale} />
+                <meshStandardMaterial
+                    map={latarniaTexture}
+                    transparent
+                    alphaTest={0.5}
+                    side={THREE.DoubleSide}
+                />
+            </mesh>
+
+            {/* 🚢 STATEK (SHIP) */}
+            <mesh
+                ref={statekRef}
+                position={STATEK_SETTINGS.position}
+                rotation={STATEK_SETTINGS.rotation}
+            >
+                <planeGeometry args={STATEK_SETTINGS.scale} />
+                <meshStandardMaterial
+                    map={statekTexture}
+                    transparent
+                    alphaTest={0.5}
+                    side={THREE.DoubleSide}
                 />
             </mesh>
 

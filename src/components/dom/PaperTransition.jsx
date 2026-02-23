@@ -171,14 +171,15 @@ const PaperTransition = () => {
         };
     }, [teleportPhase, startTeleportTransition, finishPaperOpen, play]);
 
-    // Don't render if not teleporting
-    if (!teleportPhase) return null;
+    // Zostawiamy komponent cały czas w DOM (bez "return null"), 
+    // żeby uniknąć laga pierwszego załadowania skomplikowanych ścieżek SVG.
+    // if (!teleportPhase) return null;
 
     return (
         <div
             className="preloader"
             ref={containerRef}
-            style={{ pointerEvents: 'none' }} // Allow clicks through during transition
+            style={{ pointerEvents: 'none', display: 'none' }} // DOM starts hidden
         >
             {/* LEFT HALF */}
             <div

@@ -73,10 +73,13 @@ const SegmentDoors = ({
     useFrame(() => {
         if (!leftDoorRef.current || !rightDoorRef.current) return;
 
-        // Simple distance check to the door's Z position
-        const distance = Math.abs(camera.position.z - position[2]);
+        // Simple distance check to the door's Z position combined with X bounds.
+        // During normal corridor scrolling, camera X is bounded by parallax to [-0.3, 0.3].
+        // When entering a room (like Contact), camera X moves > 1.2
+        const distanceZ = Math.abs(camera.position.z - position[2]);
+        const distanceX = Math.abs(camera.position.x - position[0]);
 
-        if (distance < openDistance && !isOpen) {
+        if (distanceZ < openDistance && distanceX < 0.8 && !isOpen) {
             setIsOpen(true);
 
             // Animate Handles
@@ -92,7 +95,8 @@ const SegmentDoors = ({
             gsap.to(rightDoorRef.current.rotation, { y: Math.PI * 0.55, duration: 0.9, ease: 'power2.out', delay: 0.1 });
         }
 
-        if (distance > closeDistance && isOpen) {
+        // Close if user moves away in Z, OR if they move away in X (like flying sideways into a room)
+        if ((distanceZ > closeDistance || distanceX > 1.5) && isOpen) {
             setIsOpen(false);
 
             // Close Doors

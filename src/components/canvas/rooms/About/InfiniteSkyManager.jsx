@@ -78,8 +78,11 @@ const STORY_CYCLE_LENGTH = 160;
 const MILESTONE_CORRIDOR_CLIP_Z = -8.0;
 
 const InfiniteSkyManager = ({ scrollProgress = 0 }) => {
-    const [activeChunks, setActiveChunks] = useState([0, 1, 2, 3]);
-    const [activeStoryCycles, setActiveStoryCycles] = useState([0, 1]);
+    // PRE-CALCULATED FOR scrolProgress = 0
+    // currentChunk = floor(0/40) = 0 -> [-1, 0, 1, 2]
+    const [activeChunks, setActiveChunks] = useState([-1, 0, 1, 2]);
+    // currentStoryCycle = floor(0/160) = 0 -> [-1, 0, 1]
+    const [activeStoryCycles, setActiveStoryCycles] = useState([-1, 0, 1]);
     const worldRef = useRef();
 
     // Track current chunk for recycling
@@ -198,7 +201,7 @@ const IntroMilestone = ({ z, scrollProgress }) => {
 
     // Calculate aspect ratio
     const aspectRatio = avatarTexture.image ? avatarTexture.image.width / avatarTexture.image.height : 1.5;
-    const avatarWidth = 4;
+    const avatarWidth = 6; // Zwiększony rozmiar awatara na chmurce
     const avatarHeight = avatarWidth / aspectRatio;
 
     // Animation: floating + spread apart when close
@@ -265,7 +268,7 @@ const IntroMilestone = ({ z, scrollProgress }) => {
             {/* Main title - Name (spreads left) */}
             <Text
                 ref={titleRef}
-                position={[0, 6, 0.1]}
+                position={[0, 5, 0.1]}
                 fontSize={0.8}
                 color="#1a1a1a"
                 anchorX="center"
@@ -278,7 +281,7 @@ const IntroMilestone = ({ z, scrollProgress }) => {
             {/* Subtitle - Brand (spreads right) */}
             <Text
                 ref={brandRef}
-                position={[0, 5.3, 0.1]}
+                position={[0, 4.3, 0.1]}
                 fontSize={0.45}
                 color="#4a4a4a"
                 anchorX="center"
@@ -302,7 +305,7 @@ const IntroMilestone = ({ z, scrollProgress }) => {
             {/* Motto - Line 1 (spreads right) */}
             <Text
                 ref={motto1Ref}
-                position={[0, -1, 0.1]}
+                position={[0, 0, 0.1]}
                 fontSize={0.32}
                 color="#555555"
                 anchorX="center"
@@ -316,7 +319,7 @@ const IntroMilestone = ({ z, scrollProgress }) => {
             {/* Motto - Line 2 (spreads left) */}
             <Text
                 ref={motto2Ref}
-                position={[0, -1.5, 0]}
+                position={[0, -0.5, 0]}
                 fontSize={0.32}
                 color="#555555"
                 anchorX="center"
