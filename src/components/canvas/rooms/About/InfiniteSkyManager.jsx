@@ -2,8 +2,10 @@ import { useState, useRef, useMemo, useEffect } from 'react';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+import gsap from 'gsap';
 import SkyChunk, { CHUNK_LENGTH, ROOM_Z } from './SkyChunk';
 import { useScene } from '../../../../context/SceneContext';
+import '../../shaders/RevealBasicMaterial'; // Registers brush-stroke reveal for BasicMaterial
 
 /**
  * InfiniteSkyManager Component
@@ -14,17 +16,20 @@ import { useScene } from '../../../../context/SceneContext';
  */
 
 /**
- * Reusable Button Component with Hover Effect
+ * Reusable Button Component with Hover Effect + Brush-Stroke Reveal
  */
-const AwardButton = ({ onClick, texture, width, height, position }) => {
+const AwardButton = ({ onClick, texture, paintedTexture, width, height, position, onHoverChange }) => {
     const meshRef = useRef();
+    const buttonRevealRef = useRef(); // RevealBasicMaterial ref for button sketch
+    const paintedRef = useRef(); // Painted button mesh visibility
+    const hideDelayRef = useRef(); // Track pending gsap.delayedCall
     const [hovered, setHovered] = useState(false);
 
     useFrame((state, delta) => {
         if (meshRef.current) {
             // Smoothly lerp scale based on hover state
             const targetScale = hovered ? 1.05 : 1.0;
-            const lerpFactor = 10 * delta; // Adjust speed here
+            const lerpFactor = 10 * delta;
 
             meshRef.current.scale.x = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, lerpFactor);
             meshRef.current.scale.y = THREE.MathUtils.lerp(meshRef.current.scale.y, targetScale, lerpFactor);
@@ -32,28 +37,73 @@ const AwardButton = ({ onClick, texture, width, height, position }) => {
         }
     });
 
+    const handlePointerOver = () => {
+        setHovered(true);
+        document.body.style.cursor = 'pointer';
+        onHoverChange?.(true);
+
+        // Brush-stroke reveal button
+        if (buttonRevealRef.current) {
+            gsap.to(buttonRevealRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (hideDelayRef.current) hideDelayRef.current.kill();
+        if (paintedRef.current) paintedRef.current.visible = true;
+    };
+
+    const handlePointerOut = () => {
+        setHovered(false);
+        document.body.style.cursor = 'auto';
+        onHoverChange?.(false);
+
+        // Reverse reveal
+        if (buttonRevealRef.current) {
+            gsap.to(buttonRevealRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        hideDelayRef.current = gsap.delayedCall(0.55, () => {
+            if (paintedRef.current) paintedRef.current.visible = false;
+        });
+    };
+
     return (
-        <mesh
-            ref={meshRef}
-            position={position}
-            onClick={onClick}
-            onPointerOver={() => {
-                setHovered(true);
-                document.body.style.cursor = 'pointer';
-            }}
-            onPointerOut={() => {
-                setHovered(false);
-                document.body.style.cursor = 'auto';
-            }}
-        >
-            <planeGeometry args={[width, height]} />
-            <meshBasicMaterial
-                map={texture}
-                transparent
-                side={THREE.DoubleSide}
-                alphaTest={0.1}
-                depthWrite={false}
-            />
+        <group ref={meshRef} position={position}>
+            {/* Painted button (behind) - hidden until hover */}
+            <mesh ref={paintedRef} position={[0, 0, -0.001]} visible={false}>
+                <planeGeometry args={[width, height]} />
+                <meshBasicMaterial
+                    map={paintedTexture}
+                    transparent
+                    side={THREE.DoubleSide}
+                    alphaTest={0.5}
+                    depthWrite={false}
+                />
+            </mesh>
+            {/* Sketch button (front) with reveal */}
+            <mesh
+                onClick={onClick}
+                onPointerOver={handlePointerOver}
+                onPointerOut={handlePointerOut}
+            >
+                <planeGeometry args={[width, height]} />
+                <revealBasicMaterial
+                    ref={buttonRevealRef}
+                    map={texture}
+                    transparent
+                    side={THREE.DoubleSide}
+                    alphaTest={0.1}
+                    depthWrite={false}
+                    uProgress={0.0}
+                />
+            </mesh>
             <Text
                 position={[0, 0, 0.05]}
                 fontSize={0.25}
@@ -64,7 +114,7 @@ const AwardButton = ({ onClick, texture, width, height, position }) => {
             >
                 VIEW
             </Text>
-        </mesh>
+        </group>
     );
 };
 
@@ -358,11 +408,10 @@ const AWARDS_DATA = {
         layout: 'certificate_grid',
         title: 'Site of the Day Awards',
         items: [
-            { label: 'SOTD - Awwwards', date: 'March 15, 2025', image: '/textures/about/SOTD.webp', url: 'https://awwwards.com' },
-            { label: 'SOTD - CSS Design Awards', date: 'April 02, 2025', image: '/textures/about/SOTD.webp', url: 'https://cssdesignawards.com' },
-            { label: 'SOTD - The FWA', date: 'May 10, 2025', image: '/textures/about/SOTD.webp', url: 'https://thefwa.com' },
-            { label: 'SOTD - Opetron', date: 'June 22, 2025', image: '/textures/about/SOTD.webp', url: 'https://opetron.com' },
-            { label: 'SOTD - CSS Winner', date: 'July 14, 2025', image: '/textures/about/SOTD.webp', url: 'https://csswinner.com' },
+            { label: 'SOTD - GSAP', date: 'February 13, 2026', image: '/textures/about/SOTDAYYOUNGMULTIGSAP.webp', url: 'https://www.linkedin.com/posts/greensock_site-of-the-day-young-multi-this-immersive-activity-7427567524940017664-zU2n?utm_source=share&utm_medium=member_desktop&rcm=ACoAAE3TV6UBqXoaJXUN5-1s3ij6SQJwTRAcbCM' },
+            { label: 'SOTD - CSS Winner', date: 'January 24, 2026', image: '/textures/about/SOTDAYYOUNGMULTICSSWINNER.webp', url: 'https://www.csswinner.com/details/young-multi-official-experience/19045' },
+            { label: 'SOTD - Orpetron', date: 'January 29, 2026', image: '/textures/about/SOTDAYYOUNGMULTIORPETRON.webp', url: 'https://orpetron.com/sites/young-multi/' },
+            { label: 'SOTD - Design Nominess', date: 'February 17, 2026', image: '/textures/about/SOTDAYYOUNGMULTIDESIGNNOMINESS.webp', url: 'https://www.designnominees.com/sites/young-multi' }
         ],
         platformConfig: {
             label: 'AWARD',
@@ -374,11 +423,7 @@ const AWARDS_DATA = {
         id: 'award-sotm',
         layout: 'certificate_grid',
         title: 'Site of the Month Awards',
-        items: [
-            { label: 'SOTM - Awwwards', date: 'April 2025', image: '/textures/about/SOTM.webp', url: 'https://awwwards.com' },
-            { label: 'SOTM - CSS Design Awards', date: 'May 2025', image: '/textures/about/SOTM.webp', url: 'https://cssdesignawards.com' },
-            { label: 'SOTM - The FWA', date: 'June 2025', image: '/textures/about/SOTM.webp', url: 'https://thefwa.com' },
-        ],
+        items: [],
         platformConfig: {
             label: 'AWARD',
             color: '#1a1a1a',
@@ -389,11 +434,7 @@ const AWARDS_DATA = {
         id: 'award-soty',
         layout: 'certificate_grid',
         title: 'Site of the Year Awards',
-        items: [
-            { label: 'SOTY - Awwwards', date: '2025', image: '/textures/about/SOTY.webp', url: 'https://awwwards.com' },
-            { label: 'SOTY - CSS Design Awards', date: '2025', image: '/textures/about/SOTY.webp', url: 'https://cssdesignawards.com' },
-            { label: 'SOTY - The FWA', date: '2025', image: '/textures/about/SOTY.webp', url: 'https://thefwa.com' },
-        ],
+        items: [],
         platformConfig: {
             label: 'PRESTIGE',
             color: '#1a1a1a',
@@ -413,17 +454,37 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
     const sotyRef = useRef();
     const sotdRef = useRef();
     const sotmRef = useRef();
+
+    // Card reveal refs (driven by button hover)
+    const sotdCardRevealRef = useRef();
+    const sotdCardPaintedRef = useRef();
+    const sotdHideDelayRef = useRef();
+    const sotmCardRevealRef = useRef();
+    const sotmCardPaintedRef = useRef();
+    const sotmHideDelayRef = useRef();
+    const sotyCardRevealRef = useRef();
+    const sotyCardPaintedRef = useRef();
+    const sotyHideDelayRef = useRef();
+
     // Load textures
     const sotyTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTY.webp');
     const sotdTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTD.webp');
     const sotmTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTM.webp');
+    const sotyPaintedTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTY_painted.webp');
+    const sotdPaintedTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTD_painted.webp');
+    const sotmPaintedTexture = useLoader(THREE.TextureLoader, '/textures/about/SOTM_painted.webp');
     const buttonTexture = useLoader(THREE.TextureLoader, '/textures/about/button.webp');
+    const buttonPaintedTexture = useLoader(THREE.TextureLoader, '/textures/about/button_painted.webp');
 
     // Color space fix
     sotyTexture.colorSpace = THREE.SRGBColorSpace;
     sotdTexture.colorSpace = THREE.SRGBColorSpace;
     sotmTexture.colorSpace = THREE.SRGBColorSpace;
+    sotyPaintedTexture.colorSpace = THREE.SRGBColorSpace;
+    sotdPaintedTexture.colorSpace = THREE.SRGBColorSpace;
+    sotmPaintedTexture.colorSpace = THREE.SRGBColorSpace;
     buttonTexture.colorSpace = THREE.SRGBColorSpace;
+    buttonPaintedTexture.colorSpace = THREE.SRGBColorSpace;
 
     // Calculate aspect ratios
     const sotyAspect = sotyTexture.image ? sotyTexture.image.width / sotyTexture.image.height : 1.5;
@@ -435,37 +496,59 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
     const cardHeight = 2.5;
 
     // Button dimensions
-    const buttonHeight = 0.35; // Adjust size as needed
+    const buttonHeight = 0.35;
     const buttonWidth = buttonHeight * buttonAspect;
-    const buttonY = -cardHeight / 2 - buttonHeight / 2 + 0.5; // Position below card
+    const buttonY = -cardHeight / 2 - buttonHeight / 2 + 0.5;
+
+    // Card hover handler factory
+    const makeCardHoverHandler = (revealRef, paintedRef, hideDelayRef) => (isHovered) => {
+        if (isHovered) {
+            if (revealRef.current) {
+                gsap.to(revealRef.current, {
+                    uProgress: 1.0,
+                    duration: 0.8,
+                    ease: 'power2.out',
+                    overwrite: true
+                });
+            }
+            if (hideDelayRef.current) hideDelayRef.current.kill();
+            if (paintedRef.current) paintedRef.current.visible = true;
+        } else {
+            if (revealRef.current) {
+                gsap.to(revealRef.current, {
+                    uProgress: 0.0,
+                    duration: 0.5,
+                    ease: 'power2.out',
+                    overwrite: true
+                });
+            }
+            hideDelayRef.current = gsap.delayedCall(0.55, () => {
+                if (paintedRef.current) paintedRef.current.visible = false;
+            });
+        }
+    };
 
     useFrame((state) => {
         if (!groupRef.current) return;
 
-        // === TWARDA LINIA CLIP (RĘCZNE OBLICZENIE WORLD Z) ===
         const worldZ = ROOM_Z + scrollProgress + z;
         groupRef.current.visible = worldZ < MILESTONE_CORRIDOR_CLIP_Z;
         if (!groupRef.current.visible) return;
 
-        // FIX: Use consistent distance based on scrollProgress + offset
         const distanceZ = z + scrollProgress - 55;
 
-        // 1. Standard reveal (SOTD, SOTM, Featured)
-        // === EDYTUJ TUTAJ (AWARDS 1) ===
         const revealStart = -120;
-        const revealEnd = -50; // Wolniejsze wyłanianie
+        const revealEnd = -50;
         let revealFactor = 0;
 
         if (distanceZ > revealStart && distanceZ < revealEnd) {
             revealFactor = (distanceZ - revealStart) / (revealEnd - revealStart);
             revealFactor = Math.min(1, Math.max(0, revealFactor));
-            revealFactor = revealFactor * revealFactor; // ease in
+            revealFactor = revealFactor * revealFactor;
         } else if (distanceZ >= revealEnd) {
             revealFactor = 1;
         }
 
-        // 2. SOTY reveal (starts LATER, moves UP)
-        // === EDYTUJ TUTAJ (AWARDS 2 - SOTY) ===
         const sotyStart = -80;
         const sotyEnd = -20;
         let sotyFactor = 0;
@@ -473,12 +556,11 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
         if (distanceZ > sotyStart && distanceZ < sotyEnd) {
             sotyFactor = (distanceZ - sotyStart) / (sotyEnd - sotyStart);
             sotyFactor = Math.min(1, Math.max(0, sotyFactor));
-            sotyFactor = 1 - Math.pow(1 - sotyFactor, 2); // ease out
+            sotyFactor = 1 - Math.pow(1 - sotyFactor, 2);
         } else if (distanceZ >= sotyEnd) {
             sotyFactor = 1;
         }
 
-        // Apply standard spread
         const spreadX = 5;
 
         if (sotdRef.current) {
@@ -488,9 +570,7 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
             sotmRef.current.position.x = revealFactor * spreadX;
         }
 
-        // Apply SOTY movement (Upwards)
         if (sotyRef.current) {
-            // Start at 0.5, move up by 2.5 units
             sotyRef.current.position.y = 0.5 + sotyFactor * 2.5;
         }
     });
@@ -511,12 +591,25 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
 
             {/* === SOTD (behind SOTY, rendered second) === */}
             <group ref={sotdRef} position={[0, 0.5, -0.5]}>
-                <mesh>
+                {/* Painted card (behind) - hidden until button hover */}
+                <mesh ref={sotdCardPaintedRef} position={[0, 0, -0.001]} visible={false}>
                     <planeGeometry args={[cardHeight * sotdAspect, cardHeight]} />
                     <meshBasicMaterial
+                        map={sotdPaintedTexture}
+                        transparent
+                        side={THREE.DoubleSide}
+                        alphaTest={0.5}
+                    />
+                </mesh>
+                {/* Sketch card (front) with reveal */}
+                <mesh>
+                    <planeGeometry args={[cardHeight * sotdAspect, cardHeight]} />
+                    <revealBasicMaterial
+                        ref={sotdCardRevealRef}
                         map={sotdTexture}
                         transparent
                         side={THREE.DoubleSide}
+                        uProgress={0.0}
                     />
                 </mesh>
                 {/* BUTTON */}
@@ -526,9 +619,11 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
                         openOverlay(AWARDS_DATA.sotd);
                     }}
                     texture={buttonTexture}
+                    paintedTexture={buttonPaintedTexture}
                     width={buttonWidth}
                     height={buttonHeight}
                     position={[0, buttonY, 0.05]}
+                    onHoverChange={makeCardHoverHandler(sotdCardRevealRef, sotdCardPaintedRef, sotdHideDelayRef)}
                 />
                 {/* AWARD LABEL */}
                 <Text
@@ -550,18 +645,31 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
                     anchorY="middle"
                     font="/fonts/CabinSketch-Bold.ttf"
                 >
-                    3
+                    4
                 </Text>
             </group>
 
             {/* === SOTM (behind SOTY, rendered third) === */}
             <group ref={sotmRef} position={[0, 0.5, -0.2]}>
-                <mesh>
+                {/* Painted card (behind) - hidden until button hover */}
+                <mesh ref={sotmCardPaintedRef} position={[0, 0, -0.001]} visible={false}>
                     <planeGeometry args={[cardHeight * sotmAspect, cardHeight]} />
                     <meshBasicMaterial
+                        map={sotmPaintedTexture}
+                        transparent
+                        side={THREE.DoubleSide}
+                        alphaTest={0.5}
+                    />
+                </mesh>
+                {/* Sketch card (front) with reveal */}
+                <mesh>
+                    <planeGeometry args={[cardHeight * sotmAspect, cardHeight]} />
+                    <revealBasicMaterial
+                        ref={sotmCardRevealRef}
                         map={sotmTexture}
                         transparent
                         side={THREE.DoubleSide}
+                        uProgress={0.0}
                     />
                 </mesh>
                 {/* BUTTON */}
@@ -571,9 +679,11 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
                         openOverlay(AWARDS_DATA.sotm);
                     }}
                     texture={buttonTexture}
+                    paintedTexture={buttonPaintedTexture}
                     width={buttonWidth}
                     height={buttonHeight}
                     position={[0, buttonY, 0.05]}
+                    onHoverChange={makeCardHoverHandler(sotmCardRevealRef, sotmCardPaintedRef, sotmHideDelayRef)}
                 />
                 {/* AWARD LABEL */}
                 <Text
@@ -601,9 +711,21 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
 
             {/* === SOTY (front, center, rendered LAST = always on top) === */}
             <group ref={sotyRef} position={[0, 0.5, 0]}>
-                <mesh>
+                {/* Painted card (behind) - hidden until button hover */}
+                <mesh ref={sotyCardPaintedRef} position={[0, 0, -0.001]} visible={false}>
                     <planeGeometry args={[cardHeight * sotyAspect, cardHeight]} />
                     <meshBasicMaterial
+                        map={sotyPaintedTexture}
+                        transparent
+                        side={THREE.DoubleSide}
+                        alphaTest={0.5}
+                    />
+                </mesh>
+                {/* Sketch card (front) with reveal */}
+                <mesh>
+                    <planeGeometry args={[cardHeight * sotyAspect, cardHeight]} />
+                    <revealBasicMaterial
+                        ref={sotyCardRevealRef}
                         map={sotyTexture}
                         transparent
                         side={THREE.DoubleSide}
@@ -616,9 +738,11 @@ const AwardsMilestone = ({ z, scrollProgress }) => {
                         openOverlay(AWARDS_DATA.soty);
                     }}
                     texture={buttonTexture}
+                    paintedTexture={buttonPaintedTexture}
                     width={buttonWidth}
                     height={buttonHeight}
                     position={[0, buttonY, 0.05]}
+                    onHoverChange={makeCardHoverHandler(sotyCardRevealRef, sotyCardPaintedRef, sotyHideDelayRef)}
                 />
                 {/* AWARD LABEL */}
                 <Text
@@ -808,20 +932,20 @@ const JourneyMilestone = ({ z, scrollProgress }) => {
 // === EDYTUJ WYSOKOŚĆ TUTAJ (zmień wartość 'y' dla każdego balona) ===
 const BALLOON_CONFIG = [
     // Large balloons (main skills) - front and center
-    { texture: '/textures/about/reactduzybalon.webp', label: 'React', size: 'large', x: -2.5, y: 2, z: 0.3, phase: 0 },
-    { texture: '/textures/about/threejsduzybalon.webp', label: 'Three.js', size: 'large', x: 2.5, y: 2.5, z: 0.2, phase: 1.5 },
-    { texture: '/textures/about/GSAPduzybalon.webp', label: 'GSAP', size: 'large', x: 0, y: 3, z: 0.5, phase: 3 },
+    { texture: '/textures/about/reactduzybalon.webp', paintedTexture: '/textures/about/reactduzybalon_painted.webp', label: 'React', size: 'large', x: -2.5, y: 2, z: 0.3, phase: 0 },
+    { texture: '/textures/about/threejsduzybalon.webp', paintedTexture: '/textures/about/threejsduzybalon_painted.webp', label: 'Three.js', size: 'large', x: 2.5, y: 2.5, z: 0.2, phase: 1.5 },
+    { texture: '/textures/about/GSAPduzybalon.webp', paintedTexture: '/textures/about/GSAPduzybalon_painted.webp', label: 'GSAP', size: 'large', x: 0, y: 3, z: 0.5, phase: 3 },
 
     // Medium balloons - scattered around
-    { texture: '/textures/about/JSSREDNIBALON.webp', label: 'JavaScript', size: 'medium', x: -4, y: 1, z: -0.3, phase: 0.8 },
-    { texture: '/textures/about/csssrednibalon.webp', label: 'CSS', size: 'medium', x: 4, y: 1.5, z: -0.2, phase: 2.2 },
-    { texture: '/textures/about/nextjssrednibalon.webp', label: 'Next.js', size: 'medium', x: 0, y: 0.5, z: -0.4, phase: 4 },
+    { texture: '/textures/about/JSSREDNIBALON.webp', paintedTexture: '/textures/about/JSSREDNIBALON_painted.webp', label: 'JavaScript', size: 'medium', x: -4, y: 1, z: -0.3, phase: 0.8 },
+    { texture: '/textures/about/csssrednibalon.webp', paintedTexture: '/textures/about/csssrednibalon_painted.webp', label: 'CSS', size: 'medium', x: 4, y: 1.5, z: -0.2, phase: 2.2 },
+    { texture: '/textures/about/nextjssrednibalon.webp', paintedTexture: '/textures/about/nextjssrednibalon_painted.webp', label: 'Next.js', size: 'medium', x: 0, y: 0.5, z: -0.4, phase: 4 },
 
     // Small balloons - background accents
-    { texture: '/textures/about/htmlmalybalon.webp', label: 'HTML', size: 'small', x: -5.5, y: 2.5, z: -0.8, phase: 1.2 },
-    { texture: '/textures/about/gitmalybalon.webp', label: 'Git', size: 'small', x: 5.5, y: 3, z: -0.7, phase: 2.8 },
-    { texture: '/textures/about/figmamalybalon.webp', label: 'Figma', size: 'small', x: -3, y: 4.5, z: -0.5, phase: 3.5 },
-    { texture: '/textures/about/firebasemalybalon.webp', label: 'Firebase', size: 'small', x: 3.5, y: 4, z: -0.6, phase: 4.5 },
+    { texture: '/textures/about/htmlmalybalon.webp', paintedTexture: '/textures/about/htmlmalybalon_painted.webp', label: 'HTML', size: 'small', x: -5.5, y: 2.5, z: -0.8, phase: 1.2 },
+    { texture: '/textures/about/gitmalybalon.webp', paintedTexture: '/textures/about/gitmalybalon_painted.webp', label: 'Git', size: 'small', x: 5.5, y: 3, z: -0.7, phase: 2.8 },
+    { texture: '/textures/about/figmamalybalon.webp', paintedTexture: '/textures/about/figmamalybalon_painted.webp', label: 'Figma', size: 'small', x: -3, y: 4.5, z: -0.5, phase: 3.5 },
+    { texture: '/textures/about/firebasemalybalon.webp', paintedTexture: '/textures/about/firebasemalybalon_painted.webp', label: 'Firebase', size: 'small', x: 3.5, y: 4, z: -0.6, phase: 4.5 },
 ];
 
 // Size multipliers for balloon categories
@@ -835,7 +959,9 @@ const SIZE_MULTIPLIERS = {
 const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
     const { viewport } = useThree();
     const texture = useLoader(THREE.TextureLoader, config.texture);
+    const paintedTexture = useLoader(THREE.TextureLoader, config.paintedTexture);
     texture.colorSpace = THREE.SRGBColorSpace;
+    paintedTexture.colorSpace = THREE.SRGBColorSpace;
 
     const [isPopping, setIsPopping] = useState(false);
     const [hovered, setHovered] = useState(false);
@@ -844,6 +970,10 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
     const textFadeRef = useRef(1); // 1 = fully visible, 0 = hidden
     const respawnOffsetRef = useRef(0); // For floating back up after respawn
     const balloonMatRef = useRef();
+    const balloonRevealRef = useRef(); // RevealBasicMaterial ref for sketch
+    const paintedMeshRef = useRef(); // Painted balloon mesh visibility
+    const paintedMatRef = useRef(); // Painted balloon material opacity control
+    const hideDelayRef = useRef(); // Track pending gsap.delayedCall
     const textRef = useRef();
 
     const aspect = texture.image ? texture.image.width / texture.image.height : 1;
@@ -882,6 +1012,42 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
         }
     }, [isPopping]);
 
+    // Hover handlers for brush-stroke reveal
+    const handlePointerOver = (e) => {
+        e.stopPropagation();
+        if (!isPopping) setHovered(true);
+
+        // Brush-stroke reveal: show painted balloon
+        if (balloonRevealRef.current) {
+            gsap.to(balloonRevealRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (hideDelayRef.current) hideDelayRef.current.kill();
+        if (paintedMeshRef.current) paintedMeshRef.current.visible = true;
+    };
+
+    const handlePointerOut = (e) => {
+        e.stopPropagation();
+        setHovered(false);
+
+        // Reverse reveal
+        if (balloonRevealRef.current) {
+            gsap.to(balloonRevealRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        hideDelayRef.current = gsap.delayedCall(0.55, () => {
+            if (paintedMeshRef.current) paintedMeshRef.current.visible = false;
+        });
+    };
+
     // Animation update loop
     useFrame((state, delta) => {
         if (hovered && !isPopping) {
@@ -899,6 +1065,12 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
         if (isPopping) {
             // Smooth, slow pop animation
             popRef.current = THREE.MathUtils.lerp(popRef.current, 1, 2.5 * delta);
+
+            // Also hide painted mesh during pop (kill any pending reveals)
+            if (hideDelayRef.current) hideDelayRef.current.kill();
+            if (balloonRevealRef.current) {
+                balloonRevealRef.current.uProgress = 0;
+            }
         }
 
         if (isFadingOutText) {
@@ -914,8 +1086,12 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
                 textFadeRef.current = 1;
                 respawnOffsetRef.current = -12; // Teleport below to float up again
                 // Immediately reset opacities to prevent flashing
-                if (balloonMatRef.current) balloonMatRef.current.opacity = 1;
+                if (balloonRevealRef.current) balloonRevealRef.current.opacity = 1;
                 if (textRef.current) textRef.current.fillOpacity = 0;
+                // Reset reveal state on respawn
+                if (balloonRevealRef.current) balloonRevealRef.current.uProgress = 0;
+                if (paintedMeshRef.current) paintedMeshRef.current.visible = false;
+                if (paintedMatRef.current) paintedMatRef.current.opacity = 1;
             }
         }
 
@@ -925,8 +1101,11 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
         }
 
         // Apply opacities if not fully respawned
-        if (balloonMatRef.current && isPopping) {
-            balloonMatRef.current.opacity = 1 - popRef.current;
+        if (balloonRevealRef.current && isPopping) {
+            balloonRevealRef.current.opacity = 1 - popRef.current;
+        }
+        if (paintedMatRef.current && isPopping) {
+            paintedMatRef.current.opacity = 1 - popRef.current;
         }
         if (textRef.current && isPopping) {
             // Combine pop-in and fade-out opacities
@@ -982,19 +1161,28 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
             scale={scale}
         >
             <group position={[currentMagnet.current.x, currentMagnet.current.y, 0]}>
+                {/* Painted balloon (behind) - hidden until hover */}
+                <mesh ref={paintedMeshRef} visible={false}>
+                    <planeGeometry args={[baseHeight * aspect, baseHeight]} />
+                    <meshBasicMaterial
+                        ref={paintedMatRef}
+                        map={paintedTexture}
+                        transparent
+                        side={THREE.DoubleSide}
+                        alphaTest={0.5}
+                        depthWrite={false}
+                    />
+                </mesh>
+
+                {/* Sketch balloon (front) with brush-stroke reveal */}
                 <mesh
+                    position={[0, 0, 0.001]}
                     onClick={(e) => {
                         e.stopPropagation();
                         if (!isPopping) setIsPopping(true);
                     }}
-                    onPointerOver={(e) => {
-                        e.stopPropagation();
-                        if (!isPopping) setHovered(true);
-                    }}
-                    onPointerOut={(e) => {
-                        e.stopPropagation();
-                        setHovered(false);
-                    }}
+                    onPointerOver={handlePointerOver}
+                    onPointerOut={handlePointerOut}
                     onPointerMove={(e) => {
                         if (hovered && !isPopping && outerGroupRef.current) {
                             const vec = new THREE.Vector3();
@@ -1004,15 +1192,16 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
                             targetMagnet.current.y = (e.point.y - vec.y) * 0.15;
                         }
                     }}
-                    visible={popRef.current < 0.99} // Hide mesh completely when fully popped to optimize rendering
+                    visible={popRef.current < 0.99}
                 >
                     <planeGeometry args={[baseHeight * aspect, baseHeight]} />
-                    <meshBasicMaterial
-                        ref={balloonMatRef}
+                    <revealBasicMaterial
+                        ref={balloonRevealRef}
                         map={texture}
                         transparent
                         side={THREE.DoubleSide}
                         depthWrite={false}
+                        uProgress={0.0}
                     />
                 </mesh>
 

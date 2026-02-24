@@ -4,6 +4,7 @@ import { Text, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import RoomInterior from './RoomInterior';
+import '../shaders/RevealMaterial'; // Registers alpha-discard reveal shader
 import { useScene } from '../../../context/SceneContext';
 
 // Constants from CorridorSegment
@@ -34,6 +35,14 @@ const DOOR_TEXTURES = {
     "LET'S CONNECT": '/textures/corridor/doors/drzwikontakt.webp',
 };
 
+// Painted (colored) variants for brush-stroke reveal on hover
+const DOOR_PAINTED_TEXTURES = {
+    'THE GALLERY': '/textures/corridor/doors/drzwiprojekty_painted.webp',
+    'THE STUDIO': '/textures/corridor/doors/drzwisocial_painted.webp',
+    'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
+    "LET'S CONNECT": '/textures/corridor/doors/drzwikontakt_painted.webp',
+};
+
 
 /**
  * DoorSection Component
@@ -58,6 +67,11 @@ const DoorSection = ({
     const groupRef = useRef(); // Main group that tilts
     const doorRef = useRef();
     const handleRef = useRef();
+    const doorMaterialRef = useRef(); // RevealMaterial ref for door sketch
+    const handleMaterialRef = useRef(); // RevealMaterial ref for handle sketch
+    const handlePaintedRef = useRef(); // Painted handle mesh visibility
+    const doorPaintedRef = useRef(); // Painted door mesh visibility
+    const handleHideDelayRef = useRef(); // Track pending gsap.delayedCall for handle visibility
     const [isHovered, setIsHovered] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -178,8 +192,11 @@ const DoorSection = ({
     // Load door textures - use the right texture based on label
     const doorTexturePath = DOOR_TEXTURES[label] || DOOR_TEXTURES['THE GALLERY'];
     const doorTexture = useTexture(doorTexturePath);
+    const doorPaintedTexturePath = DOOR_PAINTED_TEXTURES[label] || DOOR_PAINTED_TEXTURES['THE GALLERY'];
+    const doorPaintedTexture = useTexture(doorPaintedTexturePath);
     const frameTexture = useTexture('/textures/corridor/doors/ramkasingledoors.webp');
     const handleTexture = useTexture('/textures/corridor/doors/klamkadodrzwi.webp');
+    const handlePaintedTexture = useTexture('/textures/corridor/doors/klamkadodrzwi_painted.webp');
     const doorBackTexture = useTexture('/textures/corridor/doors/backsingledoors.webp');
     const arrowTexture = useTexture('/textures/corridor/strzalka.png');
 
@@ -708,6 +725,30 @@ const DoorSection = ({
             });
         }
 
+        // Reverse brush-stroke reveal (un-paint the door)
+        if (doorMaterialRef.current) {
+            gsap.to(doorMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.6,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (handleMaterialRef.current) {
+            gsap.to(handleMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.6,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        // Hide painted layers after animation
+        if (handleHideDelayRef.current) handleHideDelayRef.current.kill();
+        handleHideDelayRef.current = gsap.delayedCall(0.65, () => {
+            if (handlePaintedRef.current) handlePaintedRef.current.visible = false;
+            if (doorPaintedRef.current) doorPaintedRef.current.visible = false;
+        });
+
         gsap.to(doorRef.current.rotation, {
             y: 0,
             duration: 0.6,
@@ -744,6 +785,28 @@ const DoorSection = ({
                 ease: 'power2.out'
             });
         }
+
+        // Brush-stroke reveal: discard sketch pixels to show painted door beneath
+        if (doorMaterialRef.current) {
+            gsap.to(doorMaterialRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (handleMaterialRef.current) {
+            gsap.to(handleMaterialRef.current, {
+                uProgress: 1.0,
+                duration: 0.8,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        // Show painted layers (kill any pending hide from previous leave)
+        if (handleHideDelayRef.current) handleHideDelayRef.current.kill();
+        if (handlePaintedRef.current) handlePaintedRef.current.visible = true;
+        if (doorPaintedRef.current) doorPaintedRef.current.visible = true;
     };
 
     const handlePointerLeave = () => {
@@ -768,6 +831,30 @@ const DoorSection = ({
                 ease: 'power2.out'
             });
         }
+
+        // Reverse brush-stroke reveal
+        if (doorMaterialRef.current) {
+            gsap.to(doorMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+        if (handleMaterialRef.current) {
+            gsap.to(handleMaterialRef.current, {
+                uProgress: 0.0,
+                duration: 0.5,
+                ease: 'power2.out',
+                overwrite: true
+            });
+        }
+
+        // Hide painted layers after reverse animation completes
+        handleHideDelayRef.current = gsap.delayedCall(0.55, () => {
+            if (handlePaintedRef.current) handlePaintedRef.current.visible = false;
+            if (doorPaintedRef.current) doorPaintedRef.current.visible = false;
+        });
     };
 
     // Door pivot position - hinges on the side
@@ -938,20 +1025,46 @@ const DoorSection = ({
                     {/* === DOOR PANEL (pivots for opening) === */}
                     {/* Pivot Z at 0.01 to be slightly behind frame but in front of wall if needed, or just flush */}
                     <group ref={doorRef} position={[doorPivotX, 0, 0.01]}>
-                        {/* Door Front Texture */}
+                        {/* Clickable hitbox (invisible) for pointer events */}
                         <mesh
-                            position={[doorMeshX, -0.2, 0]}
-                            scale={[(side === 'right' && label !== 'THE STUDIO') ? -1 : 1, 1, 1]}
+                            position={[doorMeshX, -0.2, 0.005]}
                             onClick={handleClick}
                             onPointerEnter={handlePointerEnter}
                             onPointerLeave={handlePointerLeave}
                         >
                             <planeGeometry args={[doorWidth, doorHeight]} />
+                            <meshStandardMaterial transparent={true} opacity={0} depthWrite={false} />
+                        </mesh>
+
+                        {/* Painted layer (behind sketch) - hidden until hover */}
+                        <mesh
+                            ref={doorPaintedRef}
+                            position={[doorMeshX, -0.2, -0.001]}
+                            scale={[(side === 'right' && label !== 'THE STUDIO') ? -1 : 1, 1, 1]}
+                            visible={false}
+                        >
+                            <planeGeometry args={[doorWidth, doorHeight]} />
                             <meshStandardMaterial
+                                map={doorPaintedTexture}
+                                transparent={true}
+                                alphaTest={0.5}
+                                roughness={0.8}
+                            />
+                        </mesh>
+
+                        {/* Sketch overlay (front) - brush-stroke discard reveals painted beneath */}
+                        <mesh
+                            position={[doorMeshX, -0.2, 0]}
+                            scale={[(side === 'right' && label !== 'THE STUDIO') ? -1 : 1, 1, 1]}
+                        >
+                            <planeGeometry args={[doorWidth, doorHeight]} />
+                            <revealMaterial
+                                ref={doorMaterialRef}
                                 map={doorTexture}
                                 transparent={true}
                                 alphaTest={0.1}
                                 roughness={0.8}
+                                uProgress={0.0}
                             />
                         </mesh>
 
@@ -973,13 +1086,26 @@ const DoorSection = ({
 
                         {/* Handle Layer - pivot at screw position */}
                         <group ref={handleRef} position={[doorMeshX + (side === 'left' ? 0.45 : -0.45), -0.29, 0.03]}>
-                            <mesh position={[side === 'left' ? -0.50 : 0.50, 0.14, 0]} scale={[side === 'right' ? -1 : 1, 1, 1]}>
+                            {/* Painted handle (behind) - hidden until hover */}
+                            <mesh ref={handlePaintedRef} position={[side === 'left' ? -0.50 : 0.50, 0.14, -0.001]} scale={[side === 'right' ? -1 : 1, 1, 1]} visible={false}>
                                 <planeGeometry args={[doorWidth, doorHeight]} />
                                 <meshStandardMaterial
+                                    map={handlePaintedTexture}
+                                    transparent={true}
+                                    alphaTest={0.5}
+                                    depthWrite={false}
+                                />
+                            </mesh>
+                            {/* Sketch handle overlay (front) */}
+                            <mesh position={[side === 'left' ? -0.50 : 0.50, 0.14, 0]} scale={[side === 'right' ? -1 : 1, 1, 1]}>
+                                <planeGeometry args={[doorWidth, doorHeight]} />
+                                <revealMaterial
+                                    ref={handleMaterialRef}
                                     map={handleTexture}
                                     transparent={true}
                                     alphaTest={0.1}
                                     depthWrite={false}
+                                    uProgress={0.0}
                                 />
                             </mesh>
                         </group>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useScene } from '../../context/SceneContext';
 import '../../styles/GlobalOverlay.scss';
 
@@ -68,6 +68,109 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
     if (!content) return null;
 
     const label = content.platformConfig?.label || 'Content';
+
+    // Custom scrollbar state
+    const scrollContainerRef = useRef(null);
+    const trackRef = useRef(null);
+    const thumbRef = useRef(null);
+    const isDragging = useRef(false);
+    const dragStartY = useRef(0);
+    const dragStartScroll = useRef(0);
+    const [scrollThumbTop, setScrollThumbTop] = useState(0);
+    const [showScrollbar, setShowScrollbar] = useState(false);
+
+    // Update thumb position based on scroll
+    const updateThumbPosition = useCallback(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        const maxScroll = scrollHeight - clientHeight;
+        setShowScrollbar(maxScroll > 10);
+        if (maxScroll <= 0) return;
+        const scrollRatio = scrollTop / maxScroll;
+        // Track area: 5% to 90% of track height (matching CSS)
+        const trackEl = trackRef.current;
+        if (!trackEl) return;
+        const trackHeight = trackEl.clientHeight;
+        const thumbHeight = 32; // matches CSS
+        const usableHeight = trackHeight * 0.9 - thumbHeight;
+        const topOffset = trackHeight * 0.05;
+        setScrollThumbTop(topOffset + scrollRatio * usableHeight);
+    }, []);
+
+    // Scroll listener
+    useEffect(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        const onScroll = () => updateThumbPosition();
+        el.addEventListener('scroll', onScroll, { passive: true });
+        // Initial check
+        const raf = requestAnimationFrame(updateThumbPosition);
+        return () => {
+            el.removeEventListener('scroll', onScroll);
+            cancelAnimationFrame(raf);
+        };
+    }, [updateThumbPosition, content]);
+
+    // Recalculate on content/open change
+    useEffect(() => {
+        const timer = setTimeout(updateThumbPosition, 200);
+        return () => clearTimeout(timer);
+    }, [isOpen, content, updateThumbPosition]);
+
+    // Drag handlers
+    const handleThumbMouseDown = useCallback((e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging.current = true;
+        dragStartY.current = e.clientY;
+        dragStartScroll.current = scrollContainerRef.current?.scrollTop || 0;
+        document.body.style.cursor = 'grabbing';
+        document.body.style.userSelect = 'none';
+    }, []);
+
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isDragging.current) return;
+            const el = scrollContainerRef.current;
+            const trackEl = trackRef.current;
+            if (!el || !trackEl) return;
+            const deltaY = e.clientY - dragStartY.current;
+            const trackHeight = trackEl.clientHeight;
+            const thumbHeight = 32;
+            const usableHeight = trackHeight * 0.9 - thumbHeight;
+            const { scrollHeight, clientHeight } = el;
+            const maxScroll = scrollHeight - clientHeight;
+            const scrollDelta = (deltaY / usableHeight) * maxScroll;
+            el.scrollTop = dragStartScroll.current + scrollDelta;
+        };
+        const handleMouseUp = () => {
+            if (isDragging.current) {
+                isDragging.current = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, []);
+
+    // Click on track to jump
+    const handleTrackClick = useCallback((e) => {
+        const el = scrollContainerRef.current;
+        const trackEl = trackRef.current;
+        if (!el || !trackEl) return;
+        const rect = trackEl.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const trackHeight = trackEl.clientHeight;
+        const ratio = Math.max(0, Math.min(1, (clickY - trackHeight * 0.05) / (trackHeight * 0.9)));
+        const { scrollHeight, clientHeight } = el;
+        el.scrollTop = ratio * (scrollHeight - clientHeight);
+    }, []);
 
     const handleBackdropClick = (e) => {
         // Only close if clicking the wrapper itself (which acts as backdrop here)
@@ -284,77 +387,91 @@ const ContentCard = ({ content, isOpen, onClose, isMobile }) => {
 
                     {/* === LAYOUT: CERTIFICATE GRID === */}
                     {content.layout === 'certificate_grid' ? (
-                        <div
-                            className="awards-scroll-container"
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
-                                alignContent: 'start',
-                                flex: 1,
-                                overflowY: 'auto',
-                                overflowX: 'hidden',
-                                minHeight: 0,
-                                gap: isMobile ? '1rem' : '2rem',
-                                padding: isMobile ? '1rem 0.5rem 2rem 0.5rem' : '1rem 1rem 2rem 1rem', // extra bottom padding
-                                marginRight: isMobile ? '-0.5rem' : '-1.5rem', // push scrollbar to the edge
-                                paddingRight: isMobile ? '0.5rem' : '1.5rem', // compensate for margin
-                                ...getStaggerStyle(200)
-                            }}>
-                            {content.items?.map((item, index) => (
-                                <div key={index} style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '0.8rem',
-                                    backgroundColor: '#f9f9f9',
-                                    padding: '1rem',
-                                    border: '2px solid #1a1a1a',
-                                    boxShadow: '4px 4px 0px rgba(0,0,0,0.1)',
-                                    transition: 'transform 0.2s',
-                                    cursor: 'pointer',
-                                    // Slight sketch styling
-                                    borderRadius: '2px 255px 3px 255px / 255px 5px 225px 3px'
-                                }}
-                                    onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                                    onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                    onClick={() => window.open(item.url || content.url || '#', '_blank')}
-                                >
-                                    {/* Image Wrapper (Aspect Ratio) */}
-                                    <div style={{
-                                        position: 'relative',
-                                        width: '100%',
-                                        paddingBottom: '70%', // ~ISO A4 Landscape ratio
-                                        backgroundColor: '#eee',
+                        <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+                            <div
+                                ref={scrollContainerRef}
+                                className="awards-scroll-container"
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+                                    alignContent: 'start',
+                                    height: '100%',
+                                    overflowY: 'auto',
+                                    overflowX: 'hidden',
+                                    gap: isMobile ? '1rem' : '2rem',
+                                    padding: isMobile ? '1rem 0.5rem 2rem 0.5rem' : '1rem 2rem 2rem 1rem',
+                                    ...getStaggerStyle(200)
+                                }}>
+                                {content.items?.map((item, index) => (
+                                    <div key={index} style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.8rem',
+                                        backgroundColor: '#f9f9f9',
+                                        padding: '1rem',
                                         border: '2px solid #1a1a1a',
-                                        overflow: 'hidden',
+                                        boxShadow: '4px 4px 0px rgba(0,0,0,0.1)',
+                                        transition: 'transform 0.2s',
+                                        cursor: 'pointer',
                                         borderRadius: '2px 255px 3px 255px / 255px 5px 225px 3px'
-                                    }}>
-                                        <img
-                                            src={item.image || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='} // fallback for dummy
-                                            alt={item.label}
-                                            loading="lazy"
-                                            decoding="async"
-                                            style={{
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0,
-                                                width: '100%',
-                                                height: '100%',
-                                                objectFit: 'cover'
-                                            }}
-                                        />
+                                    }}
+                                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+                                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                        onClick={() => window.open(item.url || content.url || '#', '_blank')}
+                                    >
+                                        <div style={{
+                                            position: 'relative',
+                                            width: '100%',
+                                            paddingBottom: '141%', // A4 Portrait ratio
+                                            backgroundColor: '#eee',
+                                            border: '2px solid #1a1a1a',
+                                            overflow: 'hidden',
+                                            borderRadius: '2px 255px 3px 255px / 255px 5px 225px 3px'
+                                        }}>
+                                            <img
+                                                src={item.image || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}
+                                                alt={item.label}
+                                                loading="lazy"
+                                                decoding="async"
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover'
+                                                }}
+                                            />
+                                        </div>
+                                        <div style={{ textAlign: 'center' }}>
+                                            <h4 style={{ margin: '0 0 0.4rem 0', fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Rubik Scribble', cursive" }}>
+                                                {item.label}
+                                            </h4>
+                                            <span style={{ fontSize: '1.1rem', color: '#4a4a4a', fontFamily: "'Cabin Sketch', cursive", fontWeight: 700 }}>
+                                                {item.date}
+                                            </span>
+                                        </div>
                                     </div>
+                                ))}
+                            </div>
 
-                                    {/* Caption */}
-                                    <div style={{ textAlign: 'center' }}>
-                                        <h4 style={{ margin: '0 0 0.4rem 0', fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Rubik Scribble', cursive" }}>
-                                            {item.label}
-                                        </h4>
-                                        <span style={{ fontSize: '1.1rem', color: '#4a4a4a', fontFamily: "'Cabin Sketch', cursive", fontWeight: 700 }}>
-                                            {item.date}
-                                        </span>
-                                    </div>
+                            {/* Custom torn-paper scrollbar */}
+                            {showScrollbar && (
+                                <div
+                                    ref={trackRef}
+                                    className="torn-scroll-track"
+                                    onClick={handleTrackClick}
+                                    style={{ pointerEvents: 'auto' }}
+                                >
+                                    <div className="torn-scroll-line" />
+                                    <div
+                                        ref={thumbRef}
+                                        className="torn-scroll-thumb"
+                                        style={{ top: `${scrollThumbTop}px` }}
+                                        onMouseDown={handleThumbMouseDown}
+                                    />
                                 </div>
-                            ))}
+                            )}
                         </div>
                     ) : (
                         /* === LAYOUT: DEFAULT (The Studio Style) === */

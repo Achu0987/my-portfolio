@@ -175,26 +175,95 @@
     }
 }
 
-// Custom scrollbar for awards grid
+// Hide native scrollbar — custom torn-paper scrollbar replaces it
 .awards-scroll-container {
+    scrollbar-width: none; // Firefox
+    -ms-overflow-style: none; // IE/Edge
+
     &::-webkit-scrollbar {
-        width: 12px;
+        display: none; // Chrome/Safari
+    }
+}
+
+// Custom torn-paper scroll track
+.torn-scroll-track {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 30px;
+    height: 100%;
+    pointer-events: none;
+    z-index: 15;
+    overflow: visible;
+}
+
+// Sketchy wavy scroll track line
+.torn-scroll-line {
+    position: absolute;
+    right: 8px;
+    top: 5%;
+    height: 90%;
+    width: 2px;
+    // Hand-drawn dashed line
+    background: repeating-linear-gradient(to bottom,
+            rgba(26, 26, 26, 0.2) 0px,
+            rgba(26, 26, 26, 0.2) 4px,
+            transparent 4px,
+            transparent 8px);
+}
+
+// Pencil-mark scroll thumb
+.torn-scroll-thumb {
+    position: absolute;
+    right: 2px;
+    width: 16px;
+    height: 32px;
+    pointer-events: auto;
+    cursor: grab;
+    transition: transform 0.08s ease-out;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 14px;
+        height: 28px;
+        background: rgba(26, 26, 26, 0.15);
+        border: 1.5px solid rgba(26, 26, 26, 0.4);
+        // Sketchy irregular border-radius
+        border-radius: 3px 255px 4px 255px / 255px 4px 225px 3px;
+        transition: background 0.2s ease, border-color 0.2s ease;
     }
 
-    &::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.02);
-        border-radius: 4px;
-        margin-block: 4px;
+    // Little horizontal pencil strokes inside thumb
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 6px;
+        height: 12px;
+        background: repeating-linear-gradient(to bottom,
+                rgba(26, 26, 26, 0.35) 0px,
+                rgba(26, 26, 26, 0.35) 1px,
+                transparent 1px,
+                transparent 3px);
     }
 
-    &::-webkit-scrollbar-thumb {
-        background: #1a1a1a;
-        // Make it look sketchy/comic with thick borders
-        border-radius: 8px;
-        border: 3px solid #fff; // Transparent gap illusion against white/light background
+    &:hover::before {
+        background: rgba(26, 26, 26, 0.25);
+        border-color: rgba(26, 26, 26, 0.55);
     }
 
-    &::-webkit-scrollbar-thumb:hover {
-        background: #4a4a4a;
+    &:active {
+        cursor: grabbing;
+
+        &::before {
+            background: rgba(26, 26, 26, 0.35);
+            border-color: rgba(26, 26, 26, 0.65);
+        }
     }
 }
