@@ -311,6 +311,15 @@
         position: absolute;
         z-index: 2;
         cursor: url('/cursors/cursor-pointer.webp'), pointer;
+        // Reset button defaults (these are now <button> for accessibility)
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
+        outline: none;
+        appearance: none;
+        font: inherit;
+        color: inherit;
     }
 
     .zone-about {

@@ -1248,8 +1248,7 @@ const SkillBalloon = ({ config, revealFactor, spreadFactor, time }) => {
                     onPointerOut={handlePointerOut}
                     onPointerMove={(e) => {
                         if (hovered && !isPopping && outerGroupRef.current) {
-                            const vec = new THREE.Vector3();
-                            outerGroupRef.current.getWorldPosition(vec);
+                            outerGroupRef.current.getWorldPosition(_tempVec3);
                             // Reduced magnetic pull from 0.5 to 0.15 for gentler effect
                             targetMagnet.current.x = (e.point.x - vec.x) * 0.15;
                             targetMagnet.current.y = (e.point.y - vec.y) * 0.15;

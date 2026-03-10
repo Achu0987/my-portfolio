@@ -34,6 +34,10 @@ const NavigationUI = () => {
     const [bgmVol, setBgmVol] = useState(0.3);
     const [isUIHidden, setIsUIHidden] = useState(false);
 
+    // Refs for focus management
+    const mapPanelRef = useRef();
+    const mapCloseRef = useRef();
+
     useEffect(() => {
         const handleInspectChange = (e) => {
             setIsUIHidden(e.detail);
@@ -138,6 +142,54 @@ const NavigationUI = () => {
         }
     }, [isInRoom]);
 
+    // A4: Focus management for map panel — auto-focus, Escape, and focus trap
+    useEffect(() => {
+        if (isMenuOpen) {
+            // Auto-focus on close button when map opens
+            setTimeout(() => mapCloseRef.current?.focus(), 100);
+        }
+    }, [isMenuOpen]);
+
+    // Global Escape key handler — closes any open panel
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                if (isMenuOpen) setIsMenuOpen(false);
+                if (isAudioMenuOpen) setIsAudioMenuOpen(false);
+                if (isAchievementsOpen) setIsAchievementsOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isMenuOpen, isAudioMenuOpen, isAchievementsOpen]);
+
+    // Focus trap handler for map panel
+    const handleMapKeyDown = (e) => {
+        if (e.key !== 'Tab' || !mapPanelRef.current) return;
+
+        const focusable = mapPanelRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+            // Shift+Tab on first element → wrap to last
+            if (document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            }
+        } else {
+            // Tab on last element → wrap to first
+            if (document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        }
+    };
+
     const handleRoomClick = (roomId) => {
         // Don't teleport to the same room or if already teleporting
         if (roomId === currentRoom || isTeleporting) return;
@@ -228,7 +280,7 @@ const NavigationUI = () => {
 
             {/* Map Panel - Drops from top when open */}
             {hasEntered && (
-                <div className={`map-panel ${isMenuOpen ? 'open' : ''}`}>
+                <div className={`map-panel ${isMenuOpen ? 'open' : ''}`} inert={!isMenuOpen ? '' : undefined} ref={mapPanelRef} onKeyDown={handleMapKeyDown} role="dialog" aria-label="Map">
                     {/* SVG Border Overlay */}
                     <svg
                         className="map-border-overlay"
@@ -259,6 +311,7 @@ const NavigationUI = () => {
                         <div className="map-header">
                             <h3>MAP</h3>
                             <button
+                                ref={mapCloseRef}
                                 className="close-btn"
                                 onClick={() => setIsMenuOpen(false)}
                                 aria-label="Close map"
@@ -279,29 +332,45 @@ const NavigationUI = () => {
                             <img ref={paintedMapsRefs.studio} src="/images/map_studio_painted.webp" alt="" className="painted-map-layer" style={{ clipPath: 'polygon(85% 41%, 85% 41%, 85% 81%, 85% 81%)' }} />
 
                             {/* Hover Zones — 4 quadrants covering the map */}
-                            <div
+                            <button
+                                type="button"
                                 className="map-hover-zone zone-about"
                                 onMouseEnter={() => setHoveredRoom('about')}
                                 onMouseLeave={() => setHoveredRoom(null)}
+                                onFocus={() => setHoveredRoom('about')}
+                                onBlur={() => setHoveredRoom(null)}
                                 onClick={() => handleRoomClick('about')}
+                                aria-label="Teleport to About room"
                             />
-                            <div
+                            <button
+                                type="button"
                                 className="map-hover-zone zone-gallery"
                                 onMouseEnter={() => setHoveredRoom('gallery')}
                                 onMouseLeave={() => setHoveredRoom(null)}
+                                onFocus={() => setHoveredRoom('gallery')}
+                                onBlur={() => setHoveredRoom(null)}
                                 onClick={() => handleRoomClick('gallery')}
+                                aria-label="Teleport to Gallery room"
                             />
-                            <div
+                            <button
+                                type="button"
                                 className="map-hover-zone zone-contact"
                                 onMouseEnter={() => setHoveredRoom('contact')}
                                 onMouseLeave={() => setHoveredRoom(null)}
+                                onFocus={() => setHoveredRoom('contact')}
+                                onBlur={() => setHoveredRoom(null)}
                                 onClick={() => handleRoomClick('contact')}
+                                aria-label="Teleport to Contact room"
                             />
-                            <div
+                            <button
+                                type="button"
                                 className="map-hover-zone zone-studio"
                                 onMouseEnter={() => setHoveredRoom('studio')}
                                 onMouseLeave={() => setHoveredRoom(null)}
+                                onFocus={() => setHoveredRoom('studio')}
+                                onBlur={() => setHoveredRoom(null)}
                                 onClick={() => handleRoomClick('studio')}
+                                aria-label="Teleport to Studio room"
                             />
 
                             {/* Permanent Map Text Labels */}
@@ -352,7 +421,7 @@ const NavigationUI = () => {
 
             {/* Audio Panel — drops down from the button */}
             {hasEntered && (
-                <div className={`audio-panel ${isAudioMenuOpen ? 'open' : ''}`}>
+                <div className={`audio-panel ${isAudioMenuOpen ? 'open' : ''}`} inert={!isAudioMenuOpen ? '' : undefined}>
                     <div className="audio-card">
                         <div className="audio-header">
                             <h3>AUDIO SETTINGS</h3>
@@ -378,6 +447,8 @@ const NavigationUI = () => {
                                     value={bgmVol}
                                     onChange={(e) => handleBgmChange(parseFloat(e.target.value))}
                                     className="paper-slider"
+                                    aria-label="Music volume"
+                                    aria-valuetext={`${Math.round(bgmVol * 100)} percent`}
                                 />
                             </div>
                             <div className="slider-group">
@@ -391,6 +462,8 @@ const NavigationUI = () => {
                                     value={globalVolume}
                                     onChange={(e) => setGlobalVolume(parseFloat(e.target.value))}
                                     className="paper-slider"
+                                    aria-label="SFX volume"
+                                    aria-valuetext={`${Math.round(globalVolume * 100)} percent`}
                                 />
                             </div>
                         </div>

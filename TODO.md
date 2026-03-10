@@ -82,33 +82,33 @@
 ## 🟡 Priorytet 3 — Nowe funkcjonalności
 
 ### 7. Dodać poradnik/tutorial dla użytkownika
-- [ ] Zdecydować format:
+- [X] Zdecydować format:
   - **Opcja A:** Tooltips przy pierwszym wejściu (np. "Scroll to fly" w About)
   - **Opcja B:** Dymki informacyjne pojawiające się na 3-4 sek
   - **Opcja C:** Pomocnik/ikona "?" w narożniku z opisem interakcji
-- [ ] Poradnik per pokój:
-  - [ ] **Corridor:** "Click a door to enter" + "Use map to teleport"
-  - [ ] **About:** "Scroll to fly through my story"
-  - [ ] **Studio:** "Drag to rotate • Scroll to browse • Click to view"
-  - [ ] **Gallery:** "Scroll to browse • Click to inspect"
-  - [ ] **Contact:** "Choose a contact method"
-- [ ] Wyświetlać tylko za pierwszym razem (localStorage)
-- [ ] Animacja wejścia/wyjścia (fade + slide)
+- [X] Poradnik per pokój:
+  - [X] **Corridor:** "Click a door to enter" + "Use map to teleport"
+  - [X] **About:** "Scroll to fly through my story"
+  - [X] **Studio:** "Drag to rotate • Scroll to browse • Click to view"
+  - [X] **Gallery:** "Scroll to browse • Click to inspect"
+  - [X] **Contact:** "Choose a contact method"
+- [X] Wyświetlać tylko za pierwszym razem (localStorage)
+- [X] Animacja wejścia/wyjścia (fade + slide)
 - **Pliki:** Nowy komponent UI
 
 ### 8. Dodać dźwięki (na końcu)
-- [ ] `AudioManager.jsx` jest ready — ma `play()`, `stop()`, `fade()`, volume control
-- [ ] Lista dźwięków do dodania:
-  - [ ] **Ambient:** Cichy background loop (papier, wiatr?)
-  - [ ] **Corridor:** Kroki / szuranie
-  - [ ] **Doors:** Otwieranie/zamykanie drzwi
-  - [ ] **About:** Wiatr podczas lotu, whoosh przy chmurach
-  - [ ] **Studio:** Bzyczenie elektroniki, klik przy wyborze monitora
-  - [ ] **Gallery:** Szelest papieru/ubrań na linie
-  - [ ] **Contact:** Szum morza, splash przy rzucaniu butelki
-  - [ ] **UI:** Hover sounds, teleport swoosh
-- [ ] Utworzyć folder `/public/sounds/`
-- [ ] Dodać UI toggle (już istnieje `AudioControls.jsx`)
+- [X] `AudioManager.jsx` jest ready — ma `play()`, `stop()`, `fade()`, volume control
+- [X] Lista dźwięków do dodania:
+  - [X] **Ambient:** Cichy background loop (papier, wiatr?)
+  - [X] **Corridor:** Kroki / szuranie
+  - [X] **Doors:** Otwieranie/zamykanie drzwi
+  - [X] **About:** Wiatr podczas lotu, whoosh przy chmurach
+  - [X] **Studio:** Bzyczenie elektroniki, klik przy wyborze monitora
+  - [X] **Gallery:** Szelest papieru/ubrań na linie
+  - [X] **Contact:** Szum morza, splash przy rzucaniu butelki
+  - [X] **UI:** Hover sounds, teleport swoosh
+- [X] Utworzyć folder `/public/sounds/`
+- [X] Dodać UI toggle (już istnieje `AudioControls.jsx`)
 - **Pliki:** [AudioManager.jsx](file:///c:/Users/tomsz/Desktop/portfolio/portfolio-itom/src/context/AudioManager.jsx), [AudioControls.jsx](file:///c:/Users/tomsz/Desktop/portfolio/portfolio-itom/src/components/ui/AudioControls.jsx)
 
 ### 9. Easter Eggs & detale
@@ -127,9 +127,9 @@
 ## 🟢 Priorytet 4 — Polish & Optymalizacja
 
 ### 10. Poprawić content data w Studio
-- [ ] Uzupełnić prawdziwe URL-e (YouTube, Blog, TikTok)
-- [ ] Dodać thumbnails (prawdziwe grafiki lub wygenerowane)
-- [ ] Zaktualizować daty i metryki
+- [X] Uzupełnić prawdziwe URL-e (YouTube, Blog, TikTok)
+- [X] Dodać thumbnails (prawdziwe grafiki lub wygenerowane)
+- [X] Zaktualizować daty i metryki
 - **Pliki:** [contentData.js](file:///c:/Users/tomsz/Desktop/portfolio/portfolio-itom/src/components/canvas/rooms/Studio/contentData.js)
 
 ### 11. Performance & responsywność
@@ -141,10 +141,17 @@
   - `SkyChunk.jsx` linia 145 — `new THREE.Vector3()` co klatkę
 - [ ] LOD (Level of Detail) — mniejsza ilość chmur/doodli daleko od kamery
 
-### 12. Accessibility & SEO
-- [ ] Aria labels na interaktywnych elementach UI
-- [ ] Keyboard navigation (Tab key) przez drzwi i pokoje
-- [ ] Meta tagi i OG image dla sharing
+### 12. Accessibility & SEO (Plan Naprawczy A11y 🚨)
+- [X] **A1 — Nawigacja klawiaturą w 3D:** ~~Dodać `keydown` listener (Strzałki, Spacja, PgUp/PgDn) w `useInfiniteCamera.js` i zmapować na scroll.~~ ✅ DONE
+- [X] **A2 — Spacja aktywuje Contact:** ~~Naprawić focus management — `tabIndex={-1}` na pin-slot buttons gdy mapa zamknięta.~~ ✅ Naprawione przez A3 (inert blokuje focus)
+- [X] **A3 — Tab po zamkniętych menu:** ~~Dodać `inert` na zamkniętych panelach (mapa, audio, achievements) w `NavigationUI.jsx`.~~ ✅ DONE
+- [X] **A4 — Focus Trap w mapie:** ~~Auto-focus na close button po otwarciu + obsługa `Escape` + focus trap (Tab wraca do pierwszego elementu).~~ ✅ DONE
+- [X] **A5 — Aria labels na suwakach:** ~~Dodać `aria-label` i `aria-valuetext` do suwaków Music/SFX.~~ ✅ DONE
+- [X] **A6 — Map hover zones jako `<button>`:** ~~Zamienić `<div>` hover zones na `<button>` z `aria-label` i `onFocus/onBlur` w `NavigationUI.jsx`.~~ ✅ DONE
+- [ ] **A7 — SR fallback dla Canvas:** Stworzyć niewidoczną warstwę HTML z przyciskami odpowiadającymi interaktywnym elementom 3D (drzwi, monitory, beczki).
+- [ ] **Responsywność (Mobile):** Poprawić FOV/pozycję Z kamery na małych ekranach, viewport ucina sceny.
+- [ ] **Optymalizacja ładowania:** Dodać wizualny feedback po kliknięciu drzwi (spinner) + preload tekstur najbliższych pokojów.
+- [ ] **Meta tagi i OG image:** Dodać `<meta description>`, Open Graph tags, Twitter Card do `index.html`.
 - [ ] Preloader pokaże % ładowania assetów (jest `Preloader.jsx`, może wymaga update)
 
 ### 13. Animacje i microinterakcje
@@ -153,18 +160,24 @@
 - [ ] Smooth page transitions — paper texture transitions (jest `PaperTransition.jsx`)
 - [ ] Dodać subtelne particle effects (pyłki w korytarzu? Świetliki w About?)
 
+### 14. Jakość kodu i Performance
+- [ ] **P1 — `new THREE.Vector3()` w useFrame:** 6 miejsc tworzących nowe instancje co klatkę → przenieść do `useRef` lub stałych modułowych.
+  - `StoryMilestone.jsx:43`, `SocialBarrel.jsx:42`, `GalleryRoom.jsx:901`, `InfiniteSkyManager.jsx:1251`
+- [ ] **P2 — `setState` w useFrame (SkillsMilestone):** `setRevealFactor/setSpreadFactor/setTime` co klatkę → zamienić na `useRef`.
+- [ ] **P3 — `console.log` w produkcji:** `StudioRoom.jsx:49,338` → usunąć lub zawinąć w `if (import.meta.env.DEV)`.
+- [ ] **P4 — Martwy hook `useCorridorCamera`:** Nie jest nigdzie importowany → potwierdzić i usunąć.
+- [ ] **P5 — Import `r3f-perf` w produkcji:** `App.jsx:4` → import dodaje kod do bundla mimo zakomentowanego `<Perf>`.
+
 ---
 
 ## 📊 Dodatkowe obserwacje z analizy kodu
 
 | Kwestia | Szczegóły | Priorytet |
 |---------|-----------|-----------|
-| Vector3 allocation w useFrame | 5+ miejsc tworzących `new THREE.Vector3()` co klatkę — memory pressure | 🔴 |
 | `contentData.js` — placeholder data | Wszystkie URL-e, thumbnails = null, dane przykładowe | 🟠 |
 | `Doodles.jsx` — 310 linii ale mogą nie renderować się w pełni | Sprawdzić czy `SketchElement`, `AnimatedStar`, `ThoughtBubble` etc. są aktywne | 🟡 |
 | `AudioManager.jsx` — fade() jest stub | `fade()` natychmiast pauzuje zamiast gradualnie ściszać | 🟡 |
 | Brak textur w Gallery | Karty projektów mogą nie mieć prawdziwych screenshot'ów | 🟠 |
-| `StudioRoom.jsx` — podwójna guard check L267 | `if (dragDistance > 5 \|\| isAnimating \|\| !towerRef.current) return;` zduplikowane | 🟢 |
 
 ---
 

@@ -124,6 +124,41 @@ const useInfiniteCamera = ({
         unlockAchievement('corridor_explore');
     }, [scrollSpeed, unlockAchievement]);
 
+    // Handle keyboard navigation (A1 accessibility)
+    const handleKeyDown = useCallback((e) => {
+        if (!scrollEnabledRef.current) return;
+
+        // Don't interfere when user is typing in inputs or textareas
+        const tag = e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        const keyScrollMap = {
+            'ArrowDown': 100,
+            'ArrowUp': -100,
+            'PageDown': 400,
+            'PageUp': -400,
+            ' ': 200,           // Spacebar
+        };
+
+        const delta = keyScrollMap[e.key];
+        if (delta !== undefined) {
+            e.preventDefault();
+            targetZ.current -= delta * scrollSpeed;
+            unlockAchievement('corridor_explore');
+        }
+
+        // Arrow Left/Right → subtle camera glance
+        if (parallaxEnabledRef.current) {
+            if (e.key === 'ArrowLeft') {
+                targetSwipeGlance.current = Math.max(-MAX_SWIPE_GLANCE, targetSwipeGlance.current - 0.08);
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                targetSwipeGlance.current = Math.min(MAX_SWIPE_GLANCE, targetSwipeGlance.current + 0.08);
+                e.preventDefault();
+            }
+        }
+    }, [scrollSpeed, MAX_SWIPE_GLANCE, unlockAchievement]);
+
     // Handle mouse parallax (desktop) - ALWAYS tracks mouse position
     // but only applies to targetParallax when enabled
     const handleMouseMove = useCallback((e) => {
@@ -217,6 +252,7 @@ const useInfiniteCamera = ({
         // Desktop events
         window.addEventListener('wheel', handleWheel, { passive: false });
         window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('keydown', handleKeyDown);
 
         // Mobile events
         window.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -228,11 +264,12 @@ const useInfiniteCamera = ({
         return () => {
             window.removeEventListener('wheel', handleWheel);
             window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('touchstart', handleTouchStart);
             window.removeEventListener('touchmove', handleTouchMove);
             window.removeEventListener('deviceorientation', handleDeviceOrientation);
         };
-    }, [handleWheel, handleMouseMove, handleTouchStart, handleTouchMove, handleDeviceOrientation, requestGyroscopePermission]);
+    }, [handleWheel, handleMouseMove, handleKeyDown, handleTouchStart, handleTouchMove, handleDeviceOrientation, requestGyroscopePermission]);
 
     // Main camera update loop
     useFrame(() => {
