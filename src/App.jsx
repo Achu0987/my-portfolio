@@ -15,8 +15,8 @@ import GlobalOverlay from './components/ui/GlobalOverlay';
 import posthog from 'posthog-js';
 
 // Initialize PostHog
-posthog.init('phc_WHnLrkRaCRM9jr9EfbjhC09me4DY0vH5Yx2K4rshkdQ', {
-  api_host: 'https://us.i.posthog.com',
+posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_POSTHOG_HOST,
   person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 });
 
