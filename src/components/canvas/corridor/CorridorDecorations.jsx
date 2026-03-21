@@ -332,7 +332,7 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
     const standingFrameTexture = useTexture('/textures/corridor/ramkanazdjeciemala.webp');
     const treeTexture = useTexture('/textures/corridor/drzewkowdoniczce.webp');
     const grateTexture = useTexture('/textures/corridor/kratkawentylacyjna.webp');
-    const shakerTexture = useTexture('/textures/corridor/shakerholy.webp');
+    const flowerTexture = useTexture('/textures/corridor/kwiatekwdoniczce.webp');
 
     // --- Ceiling Lights (punkty światła) ---
     // Tekstury lamp
@@ -384,16 +384,6 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
             imageWidth: 1.1,
             imageHeight: 1.1,
             offsetFromWall: 0.1, // Przesunięcie bliżej środka korytarza (0.1 unit)
-
-            // --- USTAWIENIA PODPISU (SIGNATURE SETTINGS) ---
-            signature: 'Author: Dasza',
-            // X: pozycja pozioma względem środka ramki (dodatnie = prawo, ujemne = lewo)
-            signatureX: 0.7,
-            // Y: pozycja pionowa względem środka ramki (dodatnie = góra, ujemne = dół)
-            signatureY: -0.45,
-            // Rozmiar czcionki
-            signatureSize: 0.1,
-            signatureColor: '#333333'
         },
         {
             z: zOffset - 25,         // Między Gallery a Studio (relZ -20 do -30)
@@ -402,10 +392,9 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
             height: 1.5,
             y: 0.2,
             id: 'frame-2',
-            image: '/textures/corridor/rysuneknaobrazek2.webp',
-            imagePainted: '/textures/corridor/rysuneknaobrazek2_painted.webp',
-            imageWidth: 2.03,      // TUTAJ ZMIENIASZ SZEROKOŚĆ OBRAZKA W RAMCE
-            imageHeight: 1.03,     // TUTAJ ZMIENIASZ WYSOKOŚĆ OBRAZKA W RAMCE
+            image: '/textures/corridor/rysuneknaobrazek3.webp',
+            imageWidth: 1.7,
+            imageHeight: 1,
             offsetFromWall: 0.1
         },
         {
@@ -415,6 +404,11 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
             height: 1.5,
             y: 0.25,
             id: 'frame-3',
+            signature: "Empty canvas!\nWant your art here?\nContact me!",
+            signatureX: 0,
+            signatureY: 0,
+            signatureSize: 0.12,
+            signatureColor: '#333333'
         },
         {
             z: zOffset - 55,         // Między About a Connect (relZ -50 do -60)
@@ -423,6 +417,11 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
             height: 1.5,
             y: 0.35,
             id: 'frame-4',
+            signature: "Empty canvas!\nWant your art here?\nContact me!",
+            signatureX: 0,
+            signatureY: 0,
+            signatureSize: 0.12,
+            signatureColor: '#333333'
         },
     ], [zOffset]);
 
@@ -550,14 +549,14 @@ const CorridorDecorations = ({ segmentLength, zOffset, corridorWidth = 4, corrid
                     <meshStandardMaterial attach="material-5" map={woodTexture} /> {/* Back */}
                 </mesh>
 
-                {/* SHAKER HOLY NA STOLE */}
+                {/* KWIATEK NA STOLE */}
                 <mesh
-                    position={[0, tableConfig.height + tableConfig.topThickness + 0.25, 0]} // Na blacie
+                    position={[0, tableConfig.height + tableConfig.topThickness + 0.2, 0]} // Na blacie
                     rotation={[0, -Math.PI / 4, 0]} // Lekki obrót
                 >
-                    <planeGeometry args={[0.3, 0.5]} />
+                    <planeGeometry args={[0.3, 0.4]} />
                     <meshStandardMaterial
-                        map={shakerTexture}
+                        map={flowerTexture}
                         transparent={true}
                         alphaTest={0.1}
                         side={THREE.DoubleSide}
