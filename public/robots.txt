@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://portfolio-itom.pages.dev/sitemap.xml
+Sitemap: https://itomdev.com/sitemap.xml
