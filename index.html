@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/favico.png" />
+  <link rel="apple-touch-icon" href="/favico.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google-site-verification" content="hJ5aPZ41MvWj8wpgBteG7wWeOaKQk0TrSWgfKrTTE50" />
   <meta name="google-site-verification" content="xHP9fuTfxKEJaZ1C9d_MYu1jQhgAsHJLSol3j5f55yA" />
@@ -12,7 +13,7 @@
   <!-- SEO Meta Tags -->
   <title>Tomasz "ITom" Szmajda | Creative 3D Portfolio</title>
   <meta name="description"
-    content="Experience Tomasz 'ITom' Szmajda's immersive 3D developer portfolio. An interactive journey through hand-drawn rooms, showcasing projects built with React, Three.js, and GSAP." />
+    content="Interactive 3D developer portfolio by Tomasz 'ITom' Szmajda. Explore WebGL experiments, React projects & GSAP animations in a hand-drawn gallery." />
   <meta name="author" content="Tomasz Szmajda" />
   <meta name="keywords"
     content="Tomasz Szmajda, ITom, Tomasz ITom Szmajda, web developer portfolio, 3D web development, Three.js developer, React portfolio, frontend engineer" />
@@ -23,7 +24,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Tomasz &quot;ITom&quot; Szmajda | Creative 3D Portfolio" />
   <meta property="og:description"
-    content="Explore an immersive 3D experience by Tomasz 'ITom' Szmajda, built with React, Three.js, and GSAP." />
+    content="Interactive 3D developer portfolio by Tomasz 'ITom' Szmajda. Explore WebGL experiments, React projects & GSAP animations in a hand-drawn gallery." />
   <meta property="og:url" content="https://itomdev.com/" />
   <meta property="og:site_name" content="Tomasz Szmajda Portfolio" />
   <meta property="og:image" content="https://itomdev.com/og-image.webp" />
@@ -35,7 +36,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Tomasz &quot;ITom&quot; Szmajda | Creative 3D Portfolio" />
   <meta name="twitter:description"
-    content="Explore Tomasz 'ITom' Szmajda's immersive 3D developer portfolio built with React, Three.js, and GSAP." />
+    content="Interactive 3D developer portfolio by Tomasz 'ITom' Szmajda. Explore WebGL experiments, React projects & GSAP animations in a hand-drawn gallery." />
   <meta name="twitter:image" content="https://itomdev.com/og-image.webp" />
 
   <!-- Structured Data (JSON-LD) -->
@@ -94,42 +95,56 @@
 <body>
   <!-- SEO Fallback for WebGL SPAs (2026 Crawl Optimization) -->
   <div id="seo-content" class="sr-only-seo">
-    <h1>Tomasz Szmajda - ITom Dev | Web Developer Portfolio</h1>
-    
-    <section>
-      <h2>About Tomasz ITom Szmajda</h2>
-      <p>
-        Welcome to the interactive 3D portfolio of <strong>Tomasz Szmajda</strong>, widely known online as <strong>ITom</strong> or <strong>ITom Dev</strong>. 
-        I am a passionate and creative Web Developer and Frontend Engineer specializing in React, Next.js, Three.js (WebGL), and GSAP. 
-        If you are searching for Tomasz Szmajda or ITom Dev, you have arrived at the right place. 
-        Explore my digital studio, discover my journey, and see how I blend code with art.
-      </p>
-    </section>
-
-    <section>
-      <h2>ITom Dev Projects & Work (The Gallery)</h2>
-      <p>As Tomasz Szmajda, I have developed numerous high-performance web applications and interactive experiences.</p>
+    <nav aria-label="Main Navigation">
       <ul>
-        <li><strong>MoneTune</strong> - Full-stack web application development by Tomasz Szmajda.</li>
-        <li><strong>TimberKitty</strong> - Interactive web project by ITom Dev.</li>
-        <li><strong>Young Multi</strong> - Creative collaboration and development built by ITom.</li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/gallery">Gallery & Projects</a></li>
+        <li><a href="/about">About Me</a></li>
+        <li><a href="/contact">Contact</a></li>
       </ul>
-    </section>
+    </nav>
+    <main>
+      <h1>Tomasz Szmajda - ITom Dev | Web Developer Portfolio</h1>
+      
+      <section>
+        <h2>About Tomasz ITom Szmajda</h2>
+        <p>
+          Welcome to the interactive 3D portfolio of <strong>Tomasz Szmajda</strong>, widely known online as <strong>ITom</strong> or <strong>ITom Dev</strong>. 
+          I am a passionate and creative Web Developer and Frontend Engineer specializing in React, Next.js, Three.js (WebGL), and GSAP. 
+          If you are searching for Tomasz Szmajda or ITom Dev, you have arrived at the right place. 
+          Explore my digital studio, discover my journey, and see how I blend code with art to create memorable web experiences. 
+          I focus on building performant, accessible, and uniquely engaging applications that push the boundaries of modern browsers.
+        </p>
+      </section>
 
-    <section>
-      <h2>Technologies & Skills of Tomasz Szmajda</h2>
-      <p>
-        The core stack of ITom Dev includes: React, Three.js (3D Graphics), Next.js, TypeScript, GSAP (Advanced Animations), Figma, Firebase, and modern CSS architecture. 
-        Tomasz ITom Szmajda focuses on delivering immersive, accessible, and highly optimized frontend experiences.
-      </p>
-    </section>
+      <section>
+        <h2>ITom Dev Projects & Work (The Gallery)</h2>
+        <p>As Tomasz Szmajda, I have developed numerous high-performance web applications and interactive experiences. My work spans across different industries, showcasing versatile frontend capabilities.</p>
+        <ul>
+          <li><strong>MoneTune</strong> - Full-stack web application development by Tomasz Szmajda, designed to help users track their personal finances effectively.</li>
+          <li><strong>TimberKitty</strong> - Interactive web project by ITom Dev, featuring playful animations and a responsive grid layout.</li>
+          <li><strong>Young Multi</strong> - Creative collaboration and development built by ITom, incorporating 3D models and smooth scrolling mechanics.</li>
+          <li><strong>3D Room Configurator</strong> - An experimental WebGL project allowing users to customize furniture and lighting in real-time within the browser.</li>
+        </ul>
+        <p>You can find more of my code and open-source contributions by visiting my <a href="https://github.com/ITomPoland" target="_blank" rel="noopener noreferrer">GitHub profile</a>.</p>
+      </section>
 
-    <section>
-      <h2>Contact ITom</h2>
-      <p>
-        Want to collaborate with Tomasz Szmajda? Find the contact details inside the 3D portfolio or connect with ITom Dev on LinkedIn and GitHub.
-      </p>
-    </section>
+      <section>
+        <h2>Technologies & Skills of Tomasz Szmajda</h2>
+        <p>
+          The core stack of ITom Dev includes: React, Three.js (3D Graphics / React Three Fiber), Next.js, TypeScript, GSAP (Advanced Animations), Figma, Firebase, Node.js, and modern CSS architecture (Tailwind, SCSS). 
+          Tomasz ITom Szmajda focuses on delivering immersive, accessible, and highly optimized frontend experiences. 
+          I continuously learn new rendering techniques and participate in the web development community to stay ahead of the curve in 3D visualization.
+        </p>
+      </section>
+
+      <section>
+        <h2>Contact ITom</h2>
+        <p>
+          Want to collaborate with Tomasz Szmajda on a new creative endeavor? Find the contact details inside the interactive 3D portfolio or connect with ITom Dev professionally on <a href="https://www.linkedin.com/in/tomasz-szmajda-259337305/" target="_blank" rel="noopener noreferrer">LinkedIn</a>. I am open to freelance opportunities, full-time roles, and exciting 3D web projects. Let's create something extraordinary together!
+        </p>
+      </section>
+    </main>
   </div>
 
   <!-- Noscript strict fallback -->
