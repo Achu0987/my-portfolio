@@ -11,14 +11,14 @@ import { useTexture } from '@react-three/drei';
  * Used during preloader auto-scroll.
  */
 const EmptyCorridor = ({ camera }) => {
-    const corridorWidth = 15; // Wide floor
+    const corridorWidth = 25; // Wide floor
     const corridorHeight = 3.5; // Standard height for floor level calculation
     const [segmentBase, setSegmentBase] = useState(0);
 
     // Load floor texture
     const floorTexture = useTexture('/textures/entrance/floor_paper.webp');
     floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-    floorTexture.repeat.set(4, 20); // Adjust repeat to match aspect ratio (2816x1536)
+    floorTexture.repeat.set(6.6, 20); // Adjust repeat to match aspect ratio (2816x1536) and new width
 
     // Update segment base when camera moves to a new segment (not every frame)
     useFrame(() => {
