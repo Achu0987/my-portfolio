@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 import { useScene } from '../../context/SceneContext';
 import { useAudio } from '../../context/AudioManager';
-import '../../styles/Preloader.scss'; // Reuse preloader styles
+import '../../styles/PaperTransition.scss'; // Reuse preloader styles
 
 /**
  * PaperTransition - Reusable paper tear transition for teleportation
