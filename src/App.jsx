@@ -3,7 +3,7 @@ import { Canvas, useThree, useFrame, useLoader } from '@react-three/fiber';
 import { Preload, useTexture, Text, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 
-import Preloader from './components/dom/Preloader';
+
 import PaperTransition from './components/dom/PaperTransition';
 import { AudioProvider, useAudio } from './context/AudioManager';
 import { initAudio } from './utils/audioManager';
@@ -184,12 +184,7 @@ function AppContent() {
             </>
           )}
 
-          {/* 2D Preloader 
-          <Preloader
-            ready={sceneReady}
-            onComplete={() => setIsLoaded(true)}
-          />
-          */}
+
         </div>
       </SceneProvider>
     </AudioProvider>

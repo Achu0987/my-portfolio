@@ -9,7 +9,7 @@ const fixPaths = () => {
     transform(code, id) {
       if (id.includes('/src/') || id.endsWith('.scss') || id.endsWith('.css')) {
         return {
-          code: code.replace(/(['"])\/(textures|images|sounds|cursors)\//g, "$1/my-portfolio/$2/"),
+          code: code.replace(/(['"])\/(textures|images|sounds|cursors|fonts)\//g, "$1/my-portfolio/$2/"),
           map: null
         };
       }
